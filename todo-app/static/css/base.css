@@ -1,0 +1,67 @@
+/* ---------- design tokens ---------- */
+:root {
+    --background: #FAFAFA;
+    --cards: #FFFFFF;
+    --border: #E5E5E5;
+
+    --primary-text: #1A1A1A;
+    --secondary-text: #767676;
+    --placeholder-text: #A3A3A3;
+
+    --accent: #3B82F6;
+
+    --high-priority: #EF4444;
+    --mid-priority: #F59E0B;
+    --low-priority: #10B981;
+
+    --school-tag: #93C5FD;
+    --personal-tag: #C4B5FD;
+    --others-tag: #BEF264;
+
+    --radius-card: 7px;
+    --shadow-soft: 0 8px 24px rgba(0, 32, 96, 0.08);
+    --shadow-hover: 0 14px 32px rgba(0, 32, 96, 0.2);
+    --section-pad-y: clamp(0.5rem, 5vh, 2rem);
+    --section-pad-x: clamp(0.5rem, 5vw, 2rem);
+    
+    --accent-rgb: 59, 130, 246;
+    --spacing-xs: 0.375rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 0.75rem;
+    --spacing-lg: 1.25rem;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background);
+    font-family: 'DM Sans', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    scroll-behavior: smooth;
+    overflow: hidden;
+}
+
+::-webkit-scrollbar {
+    width: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #2a2a2f;
+    border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #3a3a42;
+}
