@@ -4,6 +4,7 @@ CREATE TABLE tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
     due_date TEXT,
+    due_time TEXT,
     priority TEXT NOT NULL DEFAULT 'Low' CHECK (priority IN ('Low', 'Med', 'High')),
     tag TEXT NOT NULL DEFAULT 'Others' CHECK (tag IN ('School', 'Personal', 'Others')),
     completed INTEGER NOT NULL DEFAULT 0,

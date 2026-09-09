@@ -1,0 +1,104 @@
+{#generated html temp to check functions#}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+
+    <h1>My To-Do List</h1>
+
+    <form action="/add" method="POST">
+
+        <input
+            type="text"
+            name="title"
+            placeholder="Task title"
+            required
+        >
+
+        <input
+            type="date"
+            name="due_date"
+            required
+        >
+
+        <input
+            type="time"
+            name="due_time"
+            required
+        >
+
+        <select name="priority">
+            <option value="Low">Low</option>
+            <option value="Med">Med</option>
+            <option value="High">High</option>
+        </select>
+
+        <select name="tag">
+            <option value="School">School</option>
+            <option value="Personal">Personal</option>
+            <option value="Others">Others</option>
+        </select>
+
+        <button type="submit">Add Task</button>
+
+    </form>
+
+
+    <h2>Tasks</h2>
+
+    {% for task in tasks %}
+
+        <div>
+            <h3>{{ task["title"] }}</h3>
+
+            <p>
+                Due:
+                {{ task["due_date"] }}
+                {{ task["due_time"] }}
+            </p>
+
+            <p>
+                Priority: {{ task["priority"] }}
+            </p>
+
+            <p>
+                Tag: {{ task["tag"] }}
+            </p>
+
+            <p>
+                Status:
+                {% if task["completed"] %}
+                    Done
+                {% else %}
+                    Not Done
+                {% endif %}
+            </p>
+
+            {% if not task["completed"] %}
+                <form
+                    action="/complete/{{ task['id'] }}"
+                    method="POST"
+                >
+                    <button type="submit">Mark Done</button>
+                </form>
+            {% endif %}
+
+            <form
+                action="/delete/{{ task['id'] }}"
+                method="POST"
+            >
+                <button type="submit">Delete</button>
+            </form>
+
+        </div>
+
+        <hr>
+
+    {% endfor %}
+
+</body>
+</html>
