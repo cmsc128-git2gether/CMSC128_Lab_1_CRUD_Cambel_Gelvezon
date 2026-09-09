@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+
+<body>
+    <section class="layout">
+        <!-- side menu -->
+        <section class="sidebar">
+            <section class="branding">
+                <i class="bi bi-braces-asterisk"></i>
+                <p class="app-name">Tutuman</p>
+            </section>
+
+            <nav class="view-menu">
+                <p class="view-title">Views</p>
+
+                <a href="/?tab=all&view={{ view_mode }}" class="{{ 'active' if tab == 'all' }} view-item">
+                    <p class="view-name">All</p>
+                    <p class="view-value">{{ total_count }}</p>
+                </a>
+                <a href="/?tab=ongoing&view={{ view_mode }}" class="{{ 'active' if tab == 'ongoing' }} view-item">
+                    <p class="view-name">Ongoing</p>
+                    <p class="view-value">{{ open_count }}</p>
+                </a>
+                <a href="/?tab=completed&view={{ view_mode }}" class="{{ 'active' if tab == 'completed' }} view-item">
+                    <p class="view-name">Completed</p>
+                    <p class="view-value">{{ done_count }}</p>
+                </a>
+            </nav>
+
+            <section class="stats">
+                <section class="stat-layout">
+                    <div class="stat-card">
+                        <p class="stat-title">Total</p>
+                        <p class="stat-value">{{ total_count }}</p>
+                    </div>
+
+                    <div class="stat-card">
+                        <p class="stat-title">Open</p>
+                        <p class="stat-value">{{ open_count }}</p>
+                    </div>
+
+                    <div class="stat-card">
+                        <p class="stat-title">Done</p>
+                        <p class="stat-value">{{ done_count }}</p>
+                    </div>
+                </section>
+            </section>
+        </section>
+
+        <!-- main content -->
+        <section class="main-content">
+            <header class="content-header">
+                <div class="header-title">
+                    <p>{{ tab | capitalize if tab != 'all' else 'All Tasks' }}</p>
+                </div>
+
+                <div class="header-actions">
+
+                    <button class="filter-btn">
+                        <i class="bi bi-filter"></i> Filter
+                    </button>
+
+                    <div class="view-toggle">
+                        <a href="/?tab={{ tab }}&view=list" class="{{ 'active' if view_mode == 'list' }}">
+                            <i class="bi bi-list-ul"></i> List
+                        </a>
+                        <a href="/?tab={{ tab }}&view=calendar" class="{{ 'active' if view_mode == 'calendar' }}">
+                            <i class="bi bi-calendar"></i> Calendar
+                        </a>
+                    </div>
+
+                    <button class="new-task-btn">
+                        <i class="bi bi-plus"></i> New Task
+                    </button>
+                </div>
+            </header>
+
+            <section class="scrollable">
+                {% for label, group_tasks in grouped_open %}
+                <p class="date-group-label">{{ label }} <span>{{ group_tasks | length }}</span></p>
+
+                <ul class="task-list">
+                    {% for task in group_tasks %}
+                    <li class="task-item">
+                        <input type="radio" class="task-select" name="selected-task" id="task-{{ task.id }}" hidden>
+                        <label for="task-{{ task.id }}" class="task-row priority-{{ task.priority | lower }}">
+
+                            <span class="task-check"></span>
+
+                            <div class="task-main">
+                                <p class="task-title">{{ task.title }}</p>
+
+                                <div class="tags-row">
+                                    <span class="tag priority-tag priority-{{ task.priority | lower }}">{{ task.priority
+                                        }}</span>
+                                    <span class="tag tag-{{ task.tag | lower }}">{{ task.tag }}</span>
+                                </div>
+                            </div>
+
+                            <div class="task-due-date">
+                                <span class="task-date">{{ task.due_date | format_date }}</span>
+                            </div>
+
+                            <div class="task-actions">
+                                <button class="icon-btn edit-btn" type="button"><i class="bi bi-pencil"></i></button>
+                                <button class="icon-btn delete-btn" type="button"><i class="bi bi-trash"></i></button>
+                            </div>
+                        </label>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endfor %}
+
+                {% if done_tasks %}
+                <p class="done-label">Done <span>{{ done_tasks | length }}</span></p>
+                <ul class="task-list done-list">
+                    {% for task in done_tasks %}
+                    <li class="task-item done">
+                        <input type="radio" class="task-select" name="selected-task" id="task-{{ task.id }}" hidden>
+                        <label for="task-{{ task.id }}" class="task-row priority-{{ task.priority | lower }}">
+
+                            <span class="task-check checked">
+                                <i class="bi bi-check"></i>
+                            </span>
+
+                            <div class="task-main">
+                                <p class="task-title">{{ task.title }}</p>
+
+                                <div class="tags-row">
+                                    <span class="tag priority-tag priority-{{ task.priority | lower }}">{{ task.priority
+                                        }}</span>
+                                    <span class="tag tag-{{ task.tag | lower }}">{{ task.tag }}</span>
+                                </div>
+                            </div>
+
+                            <div class="task-due-date">
+                                <span class="task-date">{{ task.due_date | format_date }}</span>
+                            </div>
+
+                            <div class="task-actions">
+                                <button class="icon-btn edit-btn" type="button"><i class="bi bi-pencil"></i></button>
+                                <button class="icon-btn delete-btn" type="button"><i class="bi bi-trash"></i></button>
+                            </div>
+                        </label>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </section>
+        </section>
+    </section>
+</body>
+
+</html>
