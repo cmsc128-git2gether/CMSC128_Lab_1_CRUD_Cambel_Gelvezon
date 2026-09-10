@@ -1,3 +1,4 @@
+<!-- Main Interface -->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -10,6 +11,7 @@
 
 <body>
     <section class="layout">
+
         <!-- side menu -->
         <section class="sidebar">
             <section class="branding">
@@ -89,12 +91,16 @@
                 <ul class="task-list">
                     {% for task in group_tasks %}
                     <li class="task-item">
-                        <input type="radio" class="task-select" name="selected-task" id="task-{{ task.id }}" hidden>
-                        <label for="task-{{ task.id }}" class="task-row priority-{{ task.priority | lower }}">
+                        <div class="task-row priority-{{ task.priority | lower }}">
 
-                            <span class="task-check"></span>
+                            <!--Complete / uncomplete button-->
+
+                            <form action="{{ url_for('toggle', task_id=task.id) }}" method="POST" class="complete-form">
+                                <button type="submit" class="task-check" aria-label="Mark task as complete"></button>
+                            </form>
 
                             <div class="task-main">
+
                                 <p class="task-title">{{ task.title }}</p>
 
                                 <div class="tags-row">
@@ -106,13 +112,21 @@
 
                             <div class="task-due-date">
                                 <span class="task-date">{{ task.due_date | format_date }}</span>
+                                <span class="task-time">{{ task.due_time | format_time }}</span>
                             </div>
 
                             <div class="task-actions">
-                                <button class="icon-btn edit-btn" type="button"><i class="bi bi-pencil"></i></button>
+                                    <button type="button" class="icon-btn edit-btn" 
+                                        data-task-id="{{ task.id }}"
+                                        data-title="{{ task.title }}"
+                                        data-due-date="{{ task.due_date or '' }}"
+                                        data-due-time="{{ task.due_time or '' }}"
+                                        data-priority="{{ task.priority }}"
+                                        data-tag="{{ task.tag }}">
+                                        <i class="bi bi-pencil"></i>
                                 <button class="icon-btn delete-btn" type="button"><i class="bi bi-trash"></i></button>
                             </div>
-                        </label>
+                        </div>
                     </li>
                     {% endfor %}
                 </ul>
@@ -123,13 +137,16 @@
                 <ul class="task-list done-list">
                     {% for task in done_tasks %}
                     <li class="task-item done">
-                        <input type="radio" class="task-select" name="selected-task" id="task-{{ task.id }}" hidden>
-                        <label for="task-{{ task.id }}" class="task-row priority-{{ task.priority | lower }}">
 
-                            <span class="task-check checked">
-                                <i class="bi bi-check"></i>
-                            </span>
+                        <div class="task-row priority-{{ task.priority | lower }}">
 
+                            <!-- click to mark task as ongoing again-->
+                             <form action="{{ url_for('toggle', task_id=task.id) }}" method="POST" class="complete-form">
+                                <button type="submit" class="task-check checked" aria-label="Mark task as incomplete">
+                                    <i class="bi bi-check"></i>
+                                </button>
+                            </form>
+                    
                             <div class="task-main">
                                 <p class="task-title">{{ task.title }}</p>
 
@@ -142,13 +159,24 @@
 
                             <div class="task-due-date">
                                 <span class="task-date">{{ task.due_date | format_date }}</span>
+                                <span class="task-time">{{ task.due_time | format_time }}</span>
                             </div>
 
                             <div class="task-actions">
-                                <button class="icon-btn edit-btn" type="button"><i class="bi bi-pencil"></i></button>
+                                <button type="button" class="icon-btn edit-btn" 
+                                    data-task-id="{{ task.id }}"
+                                    data-title="{{ task.title }}"
+                                    data-due-date="{{ task.due_date or '' }}"
+                                    data-due-time="{{ task.due_time or '' }}"
+                                    data-priority="{{ task.priority }}"
+                                    data-tag="{{ task.tag }}">
+                                    <i class="bi bi-pencil"></i>
+                                    </button>
+
+
                                 <button class="icon-btn delete-btn" type="button"><i class="bi bi-trash"></i></button>
                             </div>
-                        </label>
+                        </div>
                     </li>
                     {% endfor %}
                 </ul>
@@ -156,6 +184,147 @@
             </section>
         </section>
     </section>
-</body>
 
+<!--For new tasks -->
+<div class="modal-overlay" id="taskModal">
+    <div class="task-modal">
+
+        <div class="modal-header">
+            <h2>New Task</h2>
+            <button type="button" class="modal-close" id="closeTaskModal">
+                &times;
+            </button>
+        </div>
+
+        <form action="{{ url_for('add') }}" method="POST">
+
+            <div class="form-group">
+                <label for="title">Task</label>
+                <input type="text" id="title" name="title" placeholder="What needs to be done?" required>
+            </div>
+
+            <div class="form-row">
+
+                <div class="form-group">
+                    <label for="due_date">Due Date</label>
+                    <input type="date" id="due_date" name="due_date">
+                </div>
+
+                <div class="form-group">
+                    <label for="due_time">Due Time</label>
+                    <input type="time" id="due_time" name="due_time">
+                </div>
+            </div>
+
+            <div class="form-row">
+
+                <div class="form-group">
+                    <label for="priority">Priority</label>
+                    <select id="priority" name="priority">
+                        <option value="Low">Low</option>
+                        <option value="Med">Med</option>
+                        <option value="High">High</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="tag">Tag</label>
+                    <select id="tag" name="tag">
+                        <option value="School">School</option>
+                        <option value="Personal">Personal</option>
+                        <option value="Others">Others</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="cancel-btn" id="cancelTask">
+                    Cancel
+                </button>
+
+                <button type="submit" class="add-task-btn">
+                    Add Task
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+</div> 
+
+<!--For editing taskss -->
+<div class="modal-overlay" id="editTaskModal">
+    <div class="task-modal">
+
+        <div class="modal-header">
+            <h2>Edit Task</h2>
+
+            <button type="button" class="close-btn" id="closeEditModal">
+                &times;
+            </button>
+        </div>
+
+        <form id="editTaskForm" method="POST">
+
+            <div class="form-group">
+                <label for="edit-title">Task</label>
+                <input type="text" id="edit-title" name="title" required>
+            </div>
+
+            <div class="form-row">
+
+                <div class="form-group">
+                    <label for="edit-due_date">Due Date</label>
+                    <input type="date" id="edit-due_date" name="due_date">
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-due_time">Due Time</label>
+                    <input type="time" id="edit-due_time" name="due_time">
+                </div>
+            </div>
+
+            <div class="form-row">
+
+                <div class="form-group">
+                    <label for="edit-priority">Priority</label>
+
+                    <select id="edit-priority" name="priority">
+                        <option value="Low">Low</option>
+                        <option value="Med">Med</option>
+                        <option value="High">High</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-tag">Tag</label>
+
+                    <select id="edit-tag" name="tag">
+                        <option value="School">School</option>
+                        <option value="Personal">Personal</option>
+                        <option value="Others">Others</option>
+                    </select>
+                </div>
+
+            </div>
+
+            <div class="modal-actions">
+
+                <button type="button" class="cancel-btn"id="cancelEdit">
+                    Cancel
+                </button>
+
+                <button type="submit" class="add-task-btn">
+                    Save Changes
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+</body>
 </html>
