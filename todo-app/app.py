@@ -1,5 +1,5 @@
+# app.py is the main Python file and runs Flask
 from flask import Flask, render_template, request, redirect, url_for
-# from asyncio import tasks
 from datetime import datetime, timedelta
 
 from database import (
@@ -8,11 +8,10 @@ from database import (
     get_task,
     update_task,
     delete_task,
-    complete_task
+    toggle_task
 )
 
 app = Flask(__name__)
-
 
 # Date formatter
 @app.template_filter('format_date')
@@ -22,7 +21,16 @@ def format_date(date_str):
     d = datetime.strptime(date_str, "%Y-%m-%d")
     return d.strftime("%A, %b %d")
 
-# Home
+# Time formatter
+@app.template_filter('format_time')
+def format_time(time_str):
+    if not time_str:
+        return None
+    
+    time_obj = datetime.strptime(time_str, "%H:%M")
+    return time_obj.strftime("%I:%M %p")
+
+# For the home interface
 @app.route('/')
 def index():
     tab = request.args.get('tab', 'all')
@@ -40,13 +48,25 @@ def index():
         query += ' AND completed = 0'
     elif tab == 'completed':
         query += ' AND completed = 1'
-    query += ' ORDER BY due_date ASC'
-
+        
+    # Displays tasks in a specific order
+    query += ''' 
+        ORDER BY
+            due_date ASC,
+            CASE priority
+                WHEN 'High' THEN 1
+                WHEN 'Med' THEN 2
+                WHEN 'Low' THEN 3
+            END ASC,
+            due_date ASC,
+            due_time ASC
+    '''
     tasks = conn.execute(query).fetchall()
     conn.close()
 
     today = datetime.now().date()
-
+    
+    # For pedning and completed tasks
     open_tasks = [t for t in tasks if t['completed'] == 0]
     done_tasks = [t for t in tasks if t['completed'] == 1]
 
@@ -66,7 +86,7 @@ def index():
         else:
             upcoming_tasks.append(t)
 
-    # only include non-empty groups, keeps template logic simple
+    # Only include non-empty groups, keeps template logic simple
     grouped_open = []
     if today_tasks:
         grouped_open.append(("Today", today_tasks))
@@ -75,7 +95,7 @@ def index():
     if upcoming_tasks:
         grouped_open.append(("Upcoming", upcoming_tasks))
 
-    # Week Date Range
+    # Week-Date Range
     def fmt(d):
         return d.strftime("%b %d").replace(" 0", " ")
 
@@ -118,11 +138,10 @@ def add():
     
     return redirect(url_for('index'))
    
-
 # For completing tasks
 @app.route('/complete/<int:task_id>', methods=['POST'])
-def complete(task_id):
-    complete_task(task_id) 
+def toggle(task_id):
+    toggle_task(task_id) 
     
     return redirect(url_for('index'))
 
@@ -133,21 +152,7 @@ def delete(task_id):
     
     return redirect(url_for('index'))
 
-# edit task
-@app.route('/edit/<int:task_id>')
-def edit(task_id):
-    task = get_task(task_id)
-    
-    if task is None:
-        return redirect(url_for('index'))
-    
-    # switch to editing view
-    return render_template(
-        'index.html',
-        task=task
-    )
-
-# edit and update values
+# For editing task and updating values of edited tasks
 @app.route('/edit/<int:task_id>', methods=['POST'])
 def update(task_id):
     title = request.form['title']
