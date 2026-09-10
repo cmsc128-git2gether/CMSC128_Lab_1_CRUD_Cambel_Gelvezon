@@ -1,6 +1,8 @@
 import sqlite3
+import os
 
-DATABASE = 'todo.db' #final database w/ logic
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATABASE = os.path.join(BASE_DIR, 'todo.db')
 
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)
@@ -8,10 +10,16 @@ def get_db_connection():
     return conn
 
 def init_db():
+    schema_path = os.path.join(
+        os.path.dirname(__file__),
+        'schema.sql'
+    )
+
+    with open(schema_path) as f:
+        schema = f.read()
+        
     conn = get_db_connection()
-    with open('schema.sql') as f:
-        conn.executescript(f.read())
-    conn.commit()
+    conn.executescript(schema)
     conn.close()
 
 # Adding a task
