@@ -1,3 +1,4 @@
+# database.py communicates with SQLite
 import sqlite3
 import os
 
@@ -45,7 +46,7 @@ def get_all_tasks():
     conn.close()
     return tasks    
 
-# epdate edited tasks
+# Update edited tasks
 def update_task(task_id, title, due_date, due_time, priority, tag):
     conn = get_db_connection()
     conn.execute('UPDATE tasks SET title = ?, due_date = ?, due_time = ?, priority = ?, tag = ? WHERE id = ?',
@@ -53,16 +54,23 @@ def update_task(task_id, title, due_date, due_time, priority, tag):
     conn.commit()
     conn.close()
 
-# delete data using id
+# Delete data using id
 def delete_task(task_id):
     conn = get_db_connection()
     conn.execute('DELETE FROM tasks WHERE id = ?', (task_id,))
     conn.commit()
     conn.close()
 
-# mark data as complete 
-def complete_task(task_id):
+# Mark data as complete 
+def toggle_task(task_id):
     conn = get_db_connection()
-    conn.execute('UPDATE tasks SET completed = 1 WHERE id = ?', (task_id,))
+    conn.execute('''
+                UPDATE tasks 
+                SET completed = CASE
+                    WHEN completed = 0 THEN 1 
+                    ELSE 0
+                END
+                WHERE id = ?''',
+                (task_id,))
     conn.commit()
     conn.close()
