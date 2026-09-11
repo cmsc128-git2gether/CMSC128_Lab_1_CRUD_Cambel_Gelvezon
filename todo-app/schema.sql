@@ -8,5 +8,6 @@ CREATE TABLE tasks (
     priority TEXT NOT NULL DEFAULT 'Low' CHECK (priority IN ('Low', 'Med', 'High')),
     tag TEXT NOT NULL DEFAULT 'Others' CHECK (tag IN ('School', 'Personal', 'Others')),
     completed INTEGER NOT NULL DEFAULT 0,
+    deleted INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
