@@ -68,9 +68,45 @@
 
                 <div class="header-actions">
 
-                    <button class="filter-btn">
-                        <i class="bi bi-filter"></i> Filter
-                    </button>
+                    <div class="filter-wrapper">
+                        <button class="filter-btn" type="button" id="filterBtn">
+                            <i class="bi bi-filter"></i> Filter
+                            {% if priority_filter or tag_filter %}<span class="filter-badge"></span>{% endif %}
+                        </button>
+
+                        <div class="filter-panel" id="filterPanel">
+                            <form method="GET" action="/">
+                                <input type="hidden" name="tab" value="{{ tab }}">
+                                <input type="hidden" name="view" value="{{ view_mode }}">
+
+                                <div class="form-group">
+                                    <label for="filter-priority">Priority</label>
+                                    <select id="filter-priority" name="priority">
+                                        <option value="" {{ 'selected' if not priority_filter }}>All</option>
+                                        <option value="Low" {{ 'selected' if priority_filter=='Low' }}>Low</option>
+                                        <option value="Med" {{ 'selected' if priority_filter=='Med' }}>Med</option>
+                                        <option value="High" {{ 'selected' if priority_filter=='High' }}>High</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="filter-tag">Tag</label>
+                                    <select id="filter-tag" name="tag">
+                                        <option value="" {{ 'selected' if not tag_filter }}>All</option>
+                                        <option value="School" {{ 'selected' if tag_filter=='School' }}>School</option>
+                                        <option value="Personal" {{ 'selected' if tag_filter=='Personal' }}>Personal
+                                        </option>
+                                        <option value="Others" {{ 'selected' if tag_filter=='Others' }}>Others</option>
+                                    </select>
+                                </div>
+
+                                <div class="filter-actions">
+                                    <a href="/?tab={{ tab }}&view={{ view_mode }}" class="cancel-btn">Clear</a>
+                                    <button type="submit" class="add-task-btn">Apply</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
 
                     <div class="view-toggle">
                         <a href="/?tab={{ tab }}&view=list" class="{{ 'active' if view_mode == 'list' }}">
@@ -107,9 +143,14 @@
                                 <p class="task-title">{{ task.title }}</p>
 
                                 <div class="tags-row">
-                                    <span class="tag priority-tag priority-{{ task.priority | lower }}">{{ task.priority
-                                        }}</span>
+                                    {% if task.priority %}
+                                    <span class="tag priority-tag priority-{{ task.priority | lower }}">{{
+                                        task.priority}}</span>
+                                    {% endif %}
+
+                                    {% if task.tag %}
                                     <span class="tag tag-{{ task.tag | lower }}">{{ task.tag }}</span>
+                                    {% endif %}
                                 </div>
                             </div>
 
@@ -156,9 +197,14 @@
                                 <p class="task-title">{{ task.title }}</p>
 
                                 <div class="tags-row">
-                                    <span class="tag priority-tag priority-{{ task.priority | lower }}">{{ task.priority
-                                        }}</span>
+                                    {% if task.priority %}
+                                    <span class="tag priority-tag priority-{{ task.priority | lower }}">{{
+                                        task.priority}}</span>
+                                    {% endif %}
+
+                                    {% if task.tag %}
                                     <span class="tag tag-{{ task.tag | lower }}">{{ task.tag }}</span>
+                                    {% endif %}
                                 </div>
                             </div>
 
