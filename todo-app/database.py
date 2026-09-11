@@ -57,7 +57,13 @@ def update_task(task_id, title, due_date, due_time, priority, tag):
 # Delete data using id
 def delete_task(task_id):
     conn = get_db_connection()
-    conn.execute('DELETE FROM tasks WHERE id = ?', (task_id,))
+    conn.execute('UPDATE tasks SET deleted = 1 WHERE id = ?', (task_id,))
+    conn.commit()
+    conn.close()
+    
+def restore_task(task_id):
+    conn = get_db_connection()
+    conn.execute('UPDATE tasks SET deleted = 0 WHERE id = ?', (task_id,))
     conn.commit()
     conn.close()
 

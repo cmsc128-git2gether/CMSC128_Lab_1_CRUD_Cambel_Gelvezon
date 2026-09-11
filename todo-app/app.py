@@ -8,6 +8,7 @@ from database import (
     get_task,
     update_task,
     delete_task,
+    restore_task,
     toggle_task
 )
 
@@ -146,11 +147,16 @@ def toggle(task_id):
     return redirect(url_for('index'))
 
 # For deleting tasks
-@app.route('/delete/<int:task_id>', methods=['POST'])
+@app.route('/delete/<int:task_id>', methods=['DELETE'])
 def delete(task_id):
-    delete_task(task_id) 
-    
-    return redirect(url_for('index'))
+    delete_task(task_id)
+    return '', 204
+
+# For deleting tasks
+@app.route('/restore/<int:task_id>', methods=['POST'])
+def restore(task_id):
+    restore_task(task_id)
+    return '', 204
 
 # For editing task and updating values of edited tasks
 @app.route('/edit/<int:task_id>', methods=['POST'])
