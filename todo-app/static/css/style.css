@@ -277,12 +277,12 @@
                 .task-item {
                     list-style: none;
 
-                .complete-form {
-                    display:flex;
-                    align-items: center;
-                    margin: 0;
-                    padding: 0;
-                }
+                    .complete-form {
+                        display: flex;
+                        align-items: center;
+                        margin: 0;
+                        padding: 0;
+                    }
 
                     .task-row {
                         display: flex;
@@ -399,8 +399,9 @@
                                 white-space: nowrap;
                                 overflow: hidden;
                                 text-overflow: ellipsis;
-                            }  
+                            }
                         }
+
                         .task-time {
                             font-size: 12px;
                             opacity: 0.7;
@@ -499,24 +500,216 @@
         }
     }
 }
+
 .modal-overlay {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.45);
-    justify-content: center;
+    background: rgba(15, 15, 20, 0.55);
+    backdrop-filter: blur(2px);
     align-items: center;
+    justify-content: center;
     z-index: 1000;
+    padding: 20px;
+
+    &.show {
+        display: flex;
+    }
+
+    .task-modal {
+        background: #ffffff;
+        border-radius: 14px;
+        width: 100%;
+        max-width: 420px;
+        padding: 24px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        animation: modal-pop 0.18s ease-out;
+
+        .modal-header {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+
+            h2 {
+                font-size: 1.15rem;
+                font-weight: 600;
+                color: #1a1a1a;
+                margin: 0;
+            }
+
+            .modal-close {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 32px;
+                height: 32px;
+                border: none;
+                background: transparent;
+                border-radius: 8px;
+                color: #6b7280;
+                font-size: 1.1rem;
+                cursor: pointer;
+                transition: background 0.15s ease, color 0.15s ease;
+
+                &:hover {
+                    background: #f3f4f6;
+                    color: #1a1a1a;
+                }
+            }
+        }
+
+        p {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin: 0 0 4px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+
+            .form-row {
+                display: flex;
+                flex-direction: row;
+                gap: 12px;
+
+                .form-group {
+                    flex: 1;
+                }
+            }
+
+            .form-group {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+
+                label {
+                    font-size: 0.8rem;
+                    font-weight: 500;
+                    color: #4b5563;
+                }
+
+                input,
+                select {
+                    border: 1px solid #d1d5db;
+                    border-radius: 8px;
+                    padding: 10px 12px;
+                    font-size: 0.9rem;
+                    color: #1a1a1a;
+                    background: #fff;
+                    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+                    &:focus {
+                        outline: none;
+                        border-color: #4da3ff;
+                        box-shadow: 0 0 0 3px rgba(77, 163, 255, 0.15);
+                    }
+                }
+            }
+        }
+
+        .modal-actions {
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 8px;
+
+            .cancel-btn {
+                padding: 10px 16px;
+                border-radius: 8px;
+                border: 1px solid #d1d5db;
+                background: #fff;
+                color: #374151;
+                font-size: 0.9rem;
+                font-weight: 500;
+                cursor: pointer;
+                transition: background 0.15s ease;
+
+                &:hover {
+                    background: #f3f4f6;
+                }
+            }
+
+            .add-task-btn {
+                padding: 10px 18px;
+                border-radius: 8px;
+                border: none;
+                background: #2563eb;
+                color: #fff;
+                font-size: 0.9rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: background 0.15s ease;
+
+                &:hover {
+                    background: #1d4ed8;
+                }
+
+                &.danger {
+                    background: #dc2626;
+
+                    &:hover {
+                        background: #b91c1c;
+                    }
+                }
+            }
+        }
+    }
 }
 
-.modal-overlay.show {
-    display: flex;
+@keyframes modal-pop {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 .task-modal {
-    width: 500px;
+    width: 600px;
     max-width: 90%;
     background: var(--background);
     border-radius: 12px;
     padding: 24px;
+}
+
+.toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #1f1f1f;
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 8px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 1000;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+}
+
+.toast #undoBtn {
+    background: none;
+    border: none;
+    color: #4da3ff;
+    font-weight: 600;
+    cursor: pointer;
 }
