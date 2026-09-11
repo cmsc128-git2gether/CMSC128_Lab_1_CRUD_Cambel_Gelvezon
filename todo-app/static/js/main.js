@@ -199,7 +199,7 @@ if (confirmDeleteBtn) {
         const idToDelete = taskIdDelete;
         const elementToDelete = taskElementDelete;
 
-        // capture position BEFORE removing anything
+
         const parentBeforeRemoval = elementToDelete ? elementToDelete.parentNode : null;
         const nextSiblingBeforeRemoval = elementToDelete ? elementToDelete.nextSibling : null;
 
@@ -220,5 +220,22 @@ if (confirmDeleteBtn) {
             .finally(function () {
                 closeDeleteModalView();
             });
+    });
+}
+
+// filter function
+const filterBtn = document.getElementById("filterBtn");
+const filterPanel = document.getElementById("filterPanel");
+
+if (filterBtn && filterPanel) {
+    filterBtn.addEventListener("click", function (event) {
+        event.stopPropagation();
+        filterPanel.classList.toggle("show");
+    });
+
+    document.addEventListener("click", function (event) {
+        if (!filterPanel.contains(event.target) && event.target !== filterBtn) {
+            filterPanel.classList.remove("show");
+        }
     });
 }

@@ -713,3 +713,84 @@
     font-weight: 600;
     cursor: pointer;
 }
+
+.filter-wrapper {
+    position: relative;
+
+    .filter-btn {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        .filter-badge {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #2563eb;
+            position: absolute;
+            top: 2px;
+            right: -2px;
+        }
+    }
+
+    .filter-panel {
+        display: none;
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+        padding: 16px;
+        width: 220px;
+        z-index: 100;
+
+        &.show {
+            display: block;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+
+            label {
+                font-size: 0.8rem;
+                font-weight: 500;
+                color: #4b5563;
+            }
+
+            select {
+                border: 1px solid #d1d5db;
+                border-radius: 8px;
+                padding: 8px 10px;
+                font-size: 0.85rem;
+            }
+        }
+
+        .filter-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            .cancel-btn {
+                font-size: 0.85rem;
+                color: #6b7280;
+                text-decoration: none;
+                padding: 8px 10px;
+            }
+
+            .add-task-btn {
+                padding: 8px 16px;
+                font-size: 0.85rem;
+            }
+        }
+    }
+}

@@ -36,19 +36,30 @@ def format_time(time_str):
 def index():
     tab = request.args.get('tab', 'all')
     view_mode = request.args.get('view', 'list')
-
+    priority_filter = request.args.get('priority', '')
+    tag_filter = request.args.get('tag', '')
     conn = get_db_connection()
 
-    all_tasks = conn.execute('SELECT * FROM tasks').fetchall()
+    all_tasks = conn.execute('SELECT * FROM tasks WHERE deleted = 0').fetchall()
     total_count = len(all_tasks)
     open_count = sum(1 for t in all_tasks if t['completed'] == 0)
     done_count = sum(1 for t in all_tasks if t['completed'] == 1)
 
-    query = 'SELECT * FROM tasks WHERE 1=1'
+    query = 'SELECT * FROM tasks WHERE deleted = 0'
+    params = []
+    
     if tab == 'ongoing':
         query += ' AND completed = 0'
     elif tab == 'completed':
         query += ' AND completed = 1'
+    
+    if priority_filter:
+        query += ' AND priority = ?'
+        params.append(priority_filter)
+
+    if tag_filter:
+        query += ' AND tag = ?'
+        params.append(tag_filter)
         
     # Displays tasks in a specific order
     query += ''' 
@@ -62,7 +73,7 @@ def index():
             due_date ASC,
             due_time ASC
     '''
-    tasks = conn.execute(query).fetchall()
+    tasks = conn.execute(query, params).fetchall()
     conn.close()
 
     today = datetime.now().date()
@@ -112,6 +123,8 @@ def index():
         today_tasks=today_tasks,
         tab=tab,
         view_mode=view_mode,
+        priority_filter=priority_filter,
+        tag_filter=tag_filter,
         total_count=total_count,
         open_count=open_count,
         done_count=done_count,
