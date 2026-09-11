@@ -104,9 +104,13 @@
                                 <p class="task-title">{{ task.title }}</p>
 
                                 <div class="tags-row">
-                                    <span class="tag priority-tag priority-{{ task.priority | lower }}">{{ task.priority
-                                        }}</span>
-                                    <span class="tag tag-{{ task.tag | lower }}">{{ task.tag }}</span>
+                                    {% if task.priority %}
+                                        <span class="tag priority-tag priority-{{ task.priority | lower }}">{{ task.priority}}</span>
+                                    {% endif %}
+
+                                    {% if task.tag %}
+                                        <span class="tag tag-{{ task.tag | lower }}">{{ task.tag }}</span>
+                                    {% endif %}
                                 </div>
                             </div>
 
@@ -151,9 +155,13 @@
                                 <p class="task-title">{{ task.title }}</p>
 
                                 <div class="tags-row">
-                                    <span class="tag priority-tag priority-{{ task.priority | lower }}">{{ task.priority
-                                        }}</span>
-                                    <span class="tag tag-{{ task.tag | lower }}">{{ task.tag }}</span>
+                                    {% if task.priority %}
+                                        <span class="tag priority-tag priority-{{ task.priority | lower }}">{{ task.priority}}</span>
+                                    {% endif %}
+
+                                    {% if task.tag %}
+                                        <span class="tag tag-{{ task.tag | lower }}">{{ task.tag }}</span>
+                                    {% endif %}
                                 </div>
                             </div>
 
@@ -219,21 +227,54 @@
             <div class="form-row">
 
                 <div class="form-group">
-                    <label for="priority">Priority</label>
-                    <select id="priority" name="priority">
-                        <option value="Low">Low</option>
-                        <option value="Med">Med</option>
-                        <option value="High">High</option>
-                    </select>
+                    <label>Priority</label>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="priority" value="">
+                            <span>None</span>
+                        </label>
+
+                        <label class="radio-option">
+                            <input type="radio" name="priority" value="Low">
+                            <span>Low</span>
+                        </label>
+
+                        <label class="radio-option">
+                            <input type="radio" name="priority" value="Med">
+                            <span>Medium</span>
+                        </label>
+
+                        <label class="radio-option">
+                            <input type="radio" name="priority" value="High">
+                            <span>High</span>
+                        </label>
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="tag">Tag</label>
-                    <select id="tag" name="tag">
-                        <option value="School">School</option>
-                        <option value="Personal">Personal</option>
-                        <option value="Others">Others</option>
-                    </select>
+                    <label>Tag</label>
+
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="tag" value="">
+                            <span>None</span>
+                        </label>
+
+                        <label class="radio-option">
+                            <input type="radio" name="tag" value="School">
+                            <span>School</span>
+                        </label>
+
+                        <label class="radio-option">
+                            <input type="radio" name="tag" value="Personal">
+                            <span>Personal</span>
+                        </label>
+
+                        <label class="radio-option">
+                            <input type="radio" name="tag" value="Others">
+                            <span>Others</span>
+                        </label>
+                    </div>
                 </div>
             </div>
 
@@ -287,23 +328,55 @@
             <div class="form-row">
 
                 <div class="form-group">
-                    <label for="edit-priority">Priority</label>
+                    <label>Priority</label>
 
-                    <select id="edit-priority" name="priority">
-                        <option value="Low">Low</option>
-                        <option value="Med">Med</option>
-                        <option value="High">High</option>
-                    </select>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="priority" value="">
+                            <span>None</span>
+                        </label>
+
+                        <label class="radio-option">
+                            <input type="radio" name="priority" value="Low">
+                            <span>Low</span>
+                        </label>
+
+                        <label class="radio-option">
+                            <input type="radio" name="priority" value="Med">
+                            <span>Medium</span>
+                        </label>
+
+                        <label class="radio-option">
+                            <input type="radio" name="priority" value="High">
+                            <span>High</span>
+                        </label>
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="edit-tag">Tag</label>
+                    <label>Tag</label>
 
-                    <select id="edit-tag" name="tag">
-                        <option value="School">School</option>
-                        <option value="Personal">Personal</option>
-                        <option value="Others">Others</option>
-                    </select>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="tag" value="">
+                            <span>None</span>
+                        </label>
+
+                        <label class="radio-option">
+                            <input type="radio" name="tag" value="School">
+                            <span>School</span>
+                        </label>
+
+                        <label class="radio-option">
+                            <input type="radio" name="tag" value="Personal">
+                            <span>Personal</span>
+                        </label>
+
+                        <label class="radio-option">
+                            <input type="radio" name="tag" value="Others">
+                            <span>Others</span>
+                        </label>
+                    </div>
                 </div>
 
             </div>

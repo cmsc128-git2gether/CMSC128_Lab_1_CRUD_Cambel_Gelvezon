@@ -122,10 +122,10 @@ def index():
 def add():
     
     title = request.form['title']
-    due_date = request.form['due_date']
-    due_time = request.form['due_time']
-    priority = request.form['priority']
-    tag = request.form['tag']
+    due_date = request.form.get('due_date') or None
+    due_time = request.form.get('due_time') or None
+    priority = request.form.get('priority') or None
+    tag = request.form.get('tag') or None
 
     
     add_task(
@@ -156,10 +156,10 @@ def delete(task_id):
 @app.route('/edit/<int:task_id>', methods=['POST'])
 def update(task_id):
     title = request.form['title']
-    due_date = request.form['due_date']
-    due_time = request.form['due_time']
-    priority = request.form['priority']
-    tag = request.form['tag']
+    due_date = request.form.get('due_date') or None
+    due_time = request.form.get('due_time') or None
+    priority = request.form.get('priority') or None
+    tag = request.form.get('tag') or None
     
     update_task(
         task_id,

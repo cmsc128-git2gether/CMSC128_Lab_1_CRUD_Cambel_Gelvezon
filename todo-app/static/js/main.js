@@ -53,8 +53,12 @@ document.querySelectorAll(".edit-btn").forEach(button => {
         document.getElementById("edit-title").value = this.dataset.title;
         document.getElementById("edit-due_date").value = this.dataset.dueDate;
         document.getElementById("edit-due_time").value = this.dataset.dueTime;
-        document.getElementById("edit-priority").value = this.dataset.priority;
-        document.getElementById("edit-tag").value = this.dataset.tag;
+        document.querySelectorAll('input[name="priority"]').forEach(radio => {
+            radio.checked = radio.value === (this.dataset.priority || "");
+        });
+        document.querySelectorAll('input[name="tag"]').forEach(radio => {
+            radio.checked = radio.value === (this.dataset.tag || "");
+        });
 
         editTaskForm.action = `/edit/${id}`;
         editTaskModal.classList.add("show");
