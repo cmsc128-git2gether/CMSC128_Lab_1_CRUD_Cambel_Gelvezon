@@ -91,3 +91,8 @@ All routes are defined in `app.py` and talk to SQLite through helper functions i
 | `POST`   | `/restore/<int:task_id>`  | Reverses a soft delete (`deleted = 0`) — powers the "Undo" button on the delete toast.                                                                                 |
 
 ## Screenshots
+<img width="1917" height="926" alt="undo-toast" src="https://github.com/user-attachments/assets/066239e3-2e13-47f3-a506-2d05ee686e7e" />
+<img width="1917" height="927" alt="task-list" src="https://github.com/user-attachments/assets/73646e9d-b627-434b-86ba-63bc7ca988f1" />
+<img width="1917" height="927" alt="Screenshot 2026-09-11 234521" src="https://github.com/user-attachments/assets/f75d4cf0-8e37-4a44-8cf0-9739c9f016c2" />
+<img width="1917" height="930" alt="new-task-modal" src="https://github.com/user-attachments/assets/19007602-424b-4e4a-9618-8fdb7b240421" />
+<img width="1917" height="923" alt="delete-confirm" src="https://github.com/user-attachments/assets/03eb2f5e-b4a2-4bff-b981-d9d9dfd59197" />
