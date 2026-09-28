@@ -1,7 +1,15 @@
 # database.py communicates with MySQL
 import mysql.connector
 import os
+from dotenv import load_dotenv
 from mysql.connector import Error
+
+load_dotenv(
+    os.path.join(
+        os.path.dirname(os.path.dirname(__file__)),
+        ".env"
+    )
+)
 
 # MySQL configuration
 DB_CONFIG = {
