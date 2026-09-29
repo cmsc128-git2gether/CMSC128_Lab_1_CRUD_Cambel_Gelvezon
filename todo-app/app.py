@@ -1,6 +1,8 @@
 # app.py is the main Python file and runs Flask
+import os
 from flask import Flask, render_template, request, redirect, url_for
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
 
 from database import (
     get_db_connection,
@@ -11,7 +13,11 @@ from database import (
     toggle_task
 )
 
+load_dotenv()
+
 app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY")
+app.permanent_session_lifetime = timedelta(days=7)
 
 # Date formatter
 @app.template_filter('format_date')
