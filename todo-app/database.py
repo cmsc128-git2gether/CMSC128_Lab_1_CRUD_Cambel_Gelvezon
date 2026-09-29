@@ -202,3 +202,39 @@ def toggle_task(task_id):
 
     cursor.close()
     conn.close()
+
+# ------------- LAB 2 FUNCTIONS ------------- #
+
+# create user function
+def create_user (email, display_name, password_hash):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO users (email, display_name, password_hash) VALUES (%s, %s, %s)",
+        (email, display_name, password_hash)
+    )
+    conn.commit()
+    user_id = cursor.lastrowid
+    cursor.close()
+    conn.close()
+    return user_id
+
+# find user and get info in db using email
+def get_user_by_email(email):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+    user = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    return user
+
+
+def get_user_by_id(user_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+    user = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    return user
