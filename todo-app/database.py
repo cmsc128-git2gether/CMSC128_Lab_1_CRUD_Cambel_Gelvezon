@@ -1,82 +1,204 @@
-# database.py communicates with SQLite
-import sqlite3
+# database.py communicates with MySQL
+import mysql.connector
 import os
+from dotenv import load_dotenv
+from mysql.connector import Error
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATABASE = os.path.join(BASE_DIR, 'todo.db')
+load_dotenv(
+    os.path.join(
+        os.path.dirname(os.path.dirname(__file__)),
+        ".env"
+    )
+)
+
+# MySQL configuration
+DB_CONFIG = {
+    "host": "localhost",
+    "user": "root",
+    "password": os.getenv("MYSQL_PASSWORD"),
+    "database": "todo_app"
+}
+
 
 def get_db_connection():
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row  
-    return conn
+    try:
+        conn = mysql.connector.connect(**DB_CONFIG)
 
+        if conn.is_connected():
+            return conn
+
+    except Error as e:
+        print(f"Database connection error: {e}")
+
+    return None
+
+
+# Initialize database
 def init_db():
-    schema_path = os.path.join(
-        os.path.dirname(__file__),
-        'schema.sql'
-    )
-
-    with open(schema_path) as f:
+    with open("schema.sql", "r") as f:
         schema = f.read()
-        
+
     conn = get_db_connection()
-    conn.executescript(schema)
+
+    if conn is None:
+        return
+
+    cursor = conn.cursor()
+
+    # schema.sql contains multiple statements
+    for statement in schema.split(";"):
+        statement = statement.strip()
+
+        if statement:
+            cursor.execute(statement)
+
+    conn.commit()
+
+    cursor.close()
     conn.close()
+
 
 # Adding a task
 def add_task(title, due_date, due_time, priority, tag):
     conn = get_db_connection()
-    conn.execute('INSERT INTO tasks (title, due_date, due_time, priority, tag) VALUES (?, ?, ?, ?, ?)',
-                 (title, due_date, due_time, priority, tag))
+
+    if conn is None:
+        return
+
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO tasks
+        (title, due_date, due_time, priority, tag)
+        VALUES (%s, %s, %s, %s, %s)
+        """,
+        (title, due_date, due_time, priority, tag)
+    )
+
     conn.commit()
+
+    cursor.close()
     conn.close()
 
-# Returns one single task based on the task_id
-# If task_id does not exist, fetchone() will return None
+
+# Returns one single task based on task_id
 def get_task(task_id):
     conn = get_db_connection()
-    task = conn.execute('SELECT * FROM tasks WHERE id = ?', (task_id,)).fetchone()
+
+    if conn is None:
+        return None
+
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute(
+        "SELECT * FROM tasks WHERE id = %s",
+        (task_id,)
+    )
+
+    task = cursor.fetchone()
+
+    cursor.close()
     conn.close()
+
     return task
 
-# Returns all tasks in the database
+
+# Returns all tasks
 def get_all_tasks():
     conn = get_db_connection()
-    tasks = conn.execute('SELECT * FROM tasks ORDER BY completed ASC, due_date ASC, due_time ASC, created_at DESC').fetchall()
+
+    if conn is None:
+        return []
+
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM tasks
+        ORDER BY completed ASC, due_date ASC, due_time ASC, created_at DESC
+        """
+    )
+
+    tasks = cursor.fetchall()
+
+    cursor.close()
     conn.close()
-    return tasks    
+
+    return tasks
+
 
 # Update edited tasks
 def update_task(task_id, title, due_date, due_time, priority, tag):
     conn = get_db_connection()
-    conn.execute('UPDATE tasks SET title = ?, due_date = ?, due_time = ?, priority = ?, tag = ? WHERE id = ?',
-                 (title, due_date, due_time, priority, tag, task_id))
+
+    if conn is None:
+        return
+
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        UPDATE tasks
+        SET title = %s,
+            due_date = %s,
+            due_time = %s,
+            priority = %s,
+            tag = %s
+        WHERE id = %s
+        """,
+        (title, due_date, due_time, priority, tag, task_id)
+    )
+
     conn.commit()
+
+    cursor.close()
     conn.close()
 
-# Delete data using id
+
+# Delete task
 def delete_task(task_id):
     conn = get_db_connection()
-    conn.execute('UPDATE tasks SET deleted = 1 WHERE id = ?', (task_id,))
+
+    if conn is None:
+        return
+
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "DELETE FROM tasks WHERE id = %s",
+        (task_id,)
+    )
+
     conn.commit()
-    conn.close()
-    
-def restore_task(task_id):
-    conn = get_db_connection()
-    conn.execute('UPDATE tasks SET deleted = 0 WHERE id = ?', (task_id,))
-    conn.commit()
+
+    cursor.close()
     conn.close()
 
-# Mark data as complete 
+
+# Mark task as complete / incomplete
 def toggle_task(task_id):
     conn = get_db_connection()
-    conn.execute('''
-                UPDATE tasks 
-                SET completed = CASE
-                    WHEN completed = 0 THEN 1 
-                    ELSE 0
-                END
-                WHERE id = ?''',
-                (task_id,))
+
+    if conn is None:
+        return
+
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        UPDATE tasks
+        SET completed = CASE
+            WHEN completed = 0 THEN 1
+            ELSE 0
+        END
+        WHERE id = %s
+        """,
+        (task_id,)
+    )
+
     conn.commit()
+
+    cursor.close()
     conn.close()

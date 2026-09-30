@@ -16,19 +16,35 @@ app = Flask(__name__)
 
 # Date formatter
 @app.template_filter('format_date')
-def format_date(date_str):
-    if not date_str:
+def format_date(date_value):
+    if not date_value:
         return None
-    d = datetime.strptime(date_str, "%Y-%m-%d")
-    return d.strftime("%A, %b %d")
+
+    if isinstance(date_value, str):
+        date_value = datetime.strptime(date_value, "%Y-%m-%d").date()
+
+    return date_value.strftime("%A, %b %d")
 
 # Time formatter
 @app.template_filter('format_time')
-def format_time(time_str):
-    if not time_str:
+def format_time(time_value):
+    if not time_value:
         return None
-    
-    time_obj = datetime.strptime(time_str, "%H:%M")
+
+    if isinstance(time_value, str):
+        time_obj = datetime.strptime(time_value, "%H:%M").time()
+    elif isinstance(time_value, timedelta):
+        # MySQL TIME values are returned as timedelta
+        total_seconds = int(time_value.total_seconds())
+        hours = total_seconds // 3600
+        minutes = (total_seconds % 3600) // 60
+        time_obj = datetime.strptime(
+            f"{hours:02d}:{minutes:02d}",
+            "%H:%M"
+        ).time()
+    else:
+        time_obj = time_value
+
     return time_obj.strftime("%I:%M %p")
 
 # For the home interface
@@ -39,8 +55,10 @@ def index():
     priority_filter = request.args.get('priority', '')
     tag_filter = request.args.get('tag', '')
     conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
 
-    all_tasks = conn.execute('SELECT * FROM tasks WHERE deleted = 0').fetchall()
+    cursor.execute("SELECT * FROM tasks")
+    all_tasks = cursor.fetchall()
     total_count = len(all_tasks)
     open_count = sum(1 for t in all_tasks if t['completed'] == 0)
     done_count = sum(1 for t in all_tasks if t['completed'] == 1)
@@ -73,7 +91,10 @@ def index():
             due_date ASC,
             due_time ASC
     '''
-    tasks = conn.execute(query, params).fetchall()
+    cursor.execute(query)
+    tasks = cursor.fetchall()
+
+    cursor.close()
     conn.close()
 
     today = datetime.now().date()
@@ -91,7 +112,11 @@ def index():
             no_due_date_tasks.append(t)
             continue
 
-        due = datetime.strptime(t['due_date'], "%Y-%m-%d").date()
+        due = t['due_date']
+
+        if isinstance(due, str):
+            due = datetime.strptime(due, "%Y-%m-%d").date()
+            
         if due <= today:
             # overdue tasks are folded into "Today" so nothing open silently disappears
             today_tasks.append(t)
