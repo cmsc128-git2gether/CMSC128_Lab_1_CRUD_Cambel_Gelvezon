@@ -1,6 +1,11 @@
 # app.py is the main Python file and runs Flask
-from flask import Flask, render_template, request, redirect, url_for
+import os
+import re
+from flask import Flask, render_template, request, redirect, url_for, flash
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
+from werkzeug.security import generate_password_hash
+from mysql.connector import IntegrityError
 
 from database import (
     get_db_connection,
@@ -8,11 +13,16 @@ from database import (
     get_task,
     update_task,
     delete_task,
-    restore_task,
-    toggle_task
+    toggle_task,
+    get_user_by_email,
+    create_user
 )
 
+load_dotenv()
+
 app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY")
+app.permanent_session_lifetime = timedelta(days=7)
 
 # Date formatter
 @app.template_filter('format_date')
@@ -215,6 +225,68 @@ def update(task_id):
     )
     
     return redirect(url_for('index'))
+
+# --------- LAB 2 FUNCTIONS --------- #
+
+EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+MIN_PASSWORD_LENGTH = 8
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    
+    # show form on GET method
+    if request.method == 'GET':
+        return render_template('register.html')
+    
+    # read form on POST method
+    # TODO: implement added requirements for password (e.g must include sysmbols, etc)
+    email = request.form.get('email', '').strip().lower()
+    display_name = request.form.get('display_name', '').strip()
+    password = request.form.get('password', '')
+    confirm_password = request.form.get('confirm_password', '')
+    
+    # form validation
+    error = None 
+    if not email or not display_name or not password or not confirm_password:
+        error = "All fields are required."
+    elif not EMAIL_PATTERN.match(email):
+        error = "Please enter a valid email address."
+    elif len(password) < MIN_PASSWORD_LENGTH:
+        error = f"Password must be at least {MIN_PASSWORD_LENGTH} characters."
+    elif password != confirm_password:
+        error = "Passwords do not match."
+    elif get_user_by_email(email):
+        error = "An account with that email already exists."
+        
+    if error:
+        flash(error, "error")
+        return render_template('register.html', email=email, display_name=display_name)
+    
+    # hash password and save user
+    password_hash = generate_password_hash(password)
+    try:
+        create_user(email, display_name, password_hash)
+    except IntegrityError:
+        # registering using same email causes errors
+        flash("An account with that email already exists.", "error")
+        return render_template('register.html', email=email, display_name=display_name)
+    
+    # redirect to login on successful register
+    flash("Account created. Please log in.", "success")
+    return redirect(url_for('login'))
+
+@app.route('/login')
+def login():
+    return render_template('/login.html')
+
+@app.route('/profile')
+def profile():
+    fake_user = {"display_name": "Test User", "email": "test@example.com", "created_at": None}
+    return render_template('profile.html', user=fake_user)
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    return "logout placeholder"
 
 if __name__ == '__main__':
     app.run(debug=True)   
