@@ -1,7 +1,8 @@
 # app.py is the main Python file and runs Flask
 import os
 import re
-from flask import Flask, render_template, request, redirect, url_for, flash
+from functools import wraps
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash
@@ -15,6 +16,7 @@ from database import (
     delete_task,
     toggle_task,
     get_user_by_email,
+    get_user_by_id,
     create_user
 )
 
@@ -24,7 +26,16 @@ app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY")
 app.permanent_session_lifetime = timedelta(days=7)
 
-# Date formatter
+# checks if user is logged in 
+def login_required(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if "user_id" not in session:
+            return redirect(url_for("login"))
+        return view(*args, **kwargs)
+    return wrapped
+
+# format dates
 @app.template_filter('format_date')
 def format_date(date_value):
     if not date_value:
@@ -58,7 +69,8 @@ def format_time(time_value):
     return time_obj.strftime("%I:%M %p")
 
 # For the home interface
-@app.route('/')
+@app.route('/tasks')
+@login_required
 def index():
     tab = request.args.get('tab', 'all')
     view_mode = request.args.get('view', 'list')
@@ -155,6 +167,7 @@ def index():
 
 # For adding tasks
 @app.route('/add', methods=['POST'])
+@login_required
 def add():
     
     title = request.form['title']
@@ -176,6 +189,7 @@ def add():
    
 # For completing tasks
 @app.route('/complete/<int:task_id>', methods=['POST'])
+@login_required
 def toggle(task_id):
     toggle_task(task_id) 
     
@@ -183,6 +197,7 @@ def toggle(task_id):
 
 # For deleting tasks
 @app.route('/delete/<int:task_id>', methods=['POST'])
+@login_required
 def delete(task_id):
     delete_task(task_id) 
     
@@ -190,6 +205,7 @@ def delete(task_id):
 
 # For editing task and updating values of edited tasks
 @app.route('/edit/<int:task_id>', methods=['POST'])
+@login_required
 def update(task_id):
     title = request.form['title']
     due_date = request.form.get('due_date') or None
@@ -212,6 +228,12 @@ def update(task_id):
 
 EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 MIN_PASSWORD_LENGTH = 8
+
+@app.route('/')
+def home():
+    if "user_id" in session:
+        return redirect(url_for("profile"))
+    return redirect(url_for("login"))
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -263,12 +285,17 @@ def login():
 
 @app.route('/profile')
 def profile():
-    fake_user = {"display_name": "Test User", "email": "test@example.com", "created_at": None}
-    return render_template('profile.html', user=fake_user)
+    user = get_user_by_id(session["user_id"])
+    if user is None:
+        session.clear()
+        return redirect(url_for("login"))
+    return render_template('profile.html', user=user)
 
 @app.route('/logout', methods=['POST'])
 def logout():
-    return "logout placeholder"
+    session.clear()
+    flash("You have been logged out.", "success")
+    return redirect(url_for("login"))
 
 if __name__ == '__main__':
     app.run(debug=True)   
