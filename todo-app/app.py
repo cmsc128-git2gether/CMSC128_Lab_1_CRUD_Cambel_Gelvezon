@@ -203,5 +203,24 @@ def update(task_id):
     
     return redirect(url_for('index'))
 
+# --------- LAB 2 FUNCTIONS ---------
+
+@app.route('/register')
+def register():
+    return render_template('register.html')
+
+@app.route('/login')
+def login():
+    return render_template('/login.html')
+
+@app.route('/profile')
+def profile():
+    fake_user = {"display_name": "Test User", "email": "test@example.com", "created_at": None}
+    return render_template('profile.html', user=fake_user)
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    return "logout placeholder"
+
 if __name__ == '__main__':
     app.run(debug=True)   
