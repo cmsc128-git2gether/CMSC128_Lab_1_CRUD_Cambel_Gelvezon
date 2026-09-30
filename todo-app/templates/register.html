@@ -6,10 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Todo App</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <style>
+        @view-transition {
+            navigation: auto;
+        }
+    </style>
 </head>
 
 <body class="auth-page">
-    <div class="auth-card">
+    <div class="auth-card register">
         <div class="auth-header">
             <i class="bi bi-braces-asterisk auth-header-icon"></i>
             <p class="auth-header-name">Tutuman</p>

@@ -687,16 +687,15 @@
     overflow-y: auto;
     padding: var(--spacing-lg);
     background-color: var(--background);
-    background-image:
-        radial-gradient(circle at 20% 15%, rgba(var(--accent-rgb), 0.12), transparent 45%),
-        radial-gradient(circle at 80% 85%, rgba(var(--accent-rgb), 0.08), transparent 45%);
+    background-image: radial-gradient(60rem 28rem at 50% -10%, rgba(var(--accent-rgb), 0.07), transparent 70%);
+
 
     .auth-card {
         width: 100%;
         max-width: 440px;
         margin: auto;
         padding: 2rem;
-        background-color: var(vards);
+        background-color: var(--cards);
         border: 1px solid var(--border);
         border-radius: 12px;
         box-shadow: var(--shadow-soft);
@@ -914,6 +913,70 @@
                 }
             }
         }
+    }
+}
+
+.auth-card {
+    view-transition-name: auth-card;
+}
+
+.auth-header {
+    view-transition-name: auth-header;
+}
+
+.auth-tabs {
+    view-transition-name: auth-tabs;
+}
+
+.auth-tab.active {
+    view-transition-name: auth-pill;
+}
+
+.auth-form {
+    view-transition-name: auth-form;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+
+    ::view-transition-group(auth-pill),
+    ::view-transition-group(auth-card) {
+        animation-duration: 0.1s;
+        animation-timing-function: ease-out;
+    }
+
+    ::view-transition-old(auth-form) {
+        animation: auth-blur-out 0.1s ease-out both;
+    }
+
+    ::view-transition-new(auth-form) {
+        animation: auth-blur-in 0.15s ease-out both;
+    }
+}
+
+@keyframes auth-blur-out {
+    to {
+        opacity: 0;
+        filter: blur(4px);
+    }
+}
+
+@keyframes auth-blur-in {
+    from {
+        opacity: 0;
+        filter: blur(4px);
+    }
+}
+
+@keyframes auth-fade-out {
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes auth-slide-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
     }
 }
 

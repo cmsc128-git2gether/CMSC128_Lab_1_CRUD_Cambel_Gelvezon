@@ -5,7 +5,7 @@ from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 from mysql.connector import IntegrityError
 
 from database import (
@@ -69,6 +69,7 @@ def format_time(time_value):
     return time_obj.strftime("%I:%M %p")
 
 # For the home interface
+
 @app.route('/tasks')
 @login_required
 def index():
@@ -298,9 +299,26 @@ def register():
     flash("Account created. Please log in.", "success")
     return redirect(url_for('login'))
 
-@app.route('/login')
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    return render_template('/login.html')
+    if "user_id" in session:
+        return redirect(url_for("profile"))
+
+    if request.method == 'GET':
+        return render_template('login.html')
+
+    email = request.form.get('email', '').strip().lower()
+    password = request.form.get('password', '')
+
+    user = get_user_by_email(email) if email else None
+    if user is None or not check_password_hash(user["password_hash"], password):
+        flash("Invalid credentials.", "error")
+        return render_template('login.html', email=email)
+
+    session.clear()
+    session.permanent = True
+    session["user_id"] = user["id"]
+    return redirect(url_for("profile"))
 
 @app.route('/profile')
 def profile():

@@ -6,6 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Todo App</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <style>
+        @view-transition {
+            navigation: auto;
+        }
+    
+        </style>
 </head>
 
 <body>
@@ -34,5 +40,6 @@
         <button type="submit">Log out</button>
     </form>
 
+    
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
