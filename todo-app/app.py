@@ -74,7 +74,8 @@ def format_time(time_value):
 def index():
     tab = request.args.get('tab', 'all')
     view_mode = request.args.get('view', 'list')
-
+    priority_filter = request.args.get('priority', '')
+    tag_filter = request.args.get('tag', '')
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
@@ -84,11 +85,21 @@ def index():
     open_count = sum(1 for t in all_tasks if t['completed'] == 0)
     done_count = sum(1 for t in all_tasks if t['completed'] == 1)
 
-    query = 'SELECT * FROM tasks WHERE 1=1'
+    query = 'SELECT * FROM tasks WHERE deleted = 0'
+    params = []
+    
     if tab == 'ongoing':
         query += ' AND completed = 0'
     elif tab == 'completed':
         query += ' AND completed = 1'
+    
+    if priority_filter:
+        query += ' AND priority = ?'
+        params.append(priority_filter)
+
+    if tag_filter:
+        query += ' AND tag = ?'
+        params.append(tag_filter)
         
     # Displays tasks in a specific order
     query += ''' 
@@ -159,6 +170,8 @@ def index():
         today_tasks=today_tasks,
         tab=tab,
         view_mode=view_mode,
+        priority_filter=priority_filter,
+        tag_filter=tag_filter,
         total_count=total_count,
         open_count=open_count,
         done_count=done_count,
@@ -196,12 +209,18 @@ def toggle(task_id):
     return redirect(url_for('index'))
 
 # For deleting tasks
-@app.route('/delete/<int:task_id>', methods=['POST'])
+@app.route('/delete/<int:task_id>', methods=['DELETE'])
 @login_required
 def delete(task_id):
-    delete_task(task_id) 
-    
-    return redirect(url_for('index'))
+    delete_task(task_id)
+    return '', 204
+
+# For deleting tasks
+@app.route('/restore/<int:task_id>', methods=['POST'])
+@login_required
+def restore(task_id):
+    restore_task(task_id)
+    return '', 204
 
 # For editing task and updating values of edited tasks
 @app.route('/edit/<int:task_id>', methods=['POST'])
