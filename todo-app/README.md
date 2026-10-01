@@ -143,8 +143,11 @@ Every task function takes a `user_id` and includes it in its `WHERE` clause, so 
 - **Route protection:** a `login_required` decorator redirects to `/login` when there is no user ID in the session. It's applied to the profile and all task routes, and `/login` and `/register` redirect logged-in users to the profile.
 - **Logout:** a POST request clears the session and returns to `/login`.
 - **Expiry:** the session also ends if the user clears their cookies, if `SECRET_KEY` changes, or after 7 days without a visit.
+
 ## Password hashing
  
 Passwords are hashed with Werkzeug's `generate_password_hash`, which adds a random salt (the algorithm is scrypt or pbkdf2, depending on the installed version). The plain password is never stored or logged. Login compares the entered password against the stored hash with `check_password_hash`. The failure message is the same for an unknown email and a wrong password.
  
 ## Password recovery
+
+Password reset tokens are generated and stored in the database as SHA-256 hashes, rather than the original tokens. The reset link containing the original token is sent to the user's registered email through SMTP, and it expires after 30 minutes. Once verified, user can set a new password, which is hashed using Werkzeugs `generate_password_hash` before being stored. The used token is deleted with `delete_reset_token` to prevent reuse. If STMP is not configured or sending fails, the reset link is printed in the terminal for local testing.
