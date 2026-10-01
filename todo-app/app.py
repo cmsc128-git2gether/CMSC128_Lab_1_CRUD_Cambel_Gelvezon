@@ -1,17 +1,20 @@
 # app.py is the main Python file and runs Flask
 import os
 import re
+import secrets
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 from mysql.connector import IntegrityError
+from mailer import send_reset_email
 
 from database import (
     get_db_connection,
     add_task,
     get_task,
+    get_valid_reset,
     update_task,
     delete_task,
     restore_task,
@@ -23,6 +26,9 @@ from database import (
     update_password_hash,
     delete_user,
     get_task_stats,
+    create_reset_token,
+    get_valid_reset,
+    delete_reset_token,
 )
 
 load_dotenv()
@@ -401,10 +407,53 @@ def logout():
     return redirect(url_for("login"))
 
 @app.route('/edit_profile', methods=['POST'])
-def lo():
+def login_required():
     session.clear()
     flash("You have been logged out.", "success")
     return redirect(url_for("login"))
+
+@app.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'GET':
+        return render_template('forgot_pass.html')
+
+    email = request.form.get('email', '').strip().lower()
+    user = get_user_by_email(email)
+
+    if user: 
+        token = secrets.token_urlsafe(32)
+        create_reset_token(user["id"], token)
+        link = url_for('reset_password', token=token, _external=True)
+        send_reset_email(email, link)
+        
+    flash("A password reset link has been sent to your email.", "success")
+    return redirect(url_for('login'))
+    
+@app.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    reset = get_valid_reset(token)
+    if reset is None: 
+        flash("Invalid or expired password reset link.", "error")
+        return redirect(url_for('forgot_pass'))
+    
+    if request.method == 'GET':
+        return render_template('reset_pass.html', token=token)
+    
+    new_password = request.form.get('new_password', '')
+    confirm_new_password = request.form.get('confirm_new_password', '')
+    
+    if len(new_password) < MIN_PASSWORD_LENGTH:
+        flash(f"New password must be at least {MIN_PASSWORD_LENGTH} characters.", "error")
+        return render_template('reset_pass.html', token=token)
+    
+    if new_password != confirm_new_password:
+        flash("New passwords do not match.", "error")
+        return render_template('reset_pass.html', token=token)
+    
+    update_password_hash(reset["user_id"], generate_password_hash(new_password))
+    delete_reset_token(reset["id"])
+    flash("Your password has been reset successfully.", "success")
+    return redirect(url_for('login'))
 
 
 if __name__ == '__main__':
