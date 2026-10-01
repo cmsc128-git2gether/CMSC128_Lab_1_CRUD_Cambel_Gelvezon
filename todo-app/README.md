@@ -2,7 +2,7 @@
 
 A multi-user todo web app created for organizing,tracking, and categorizing tasks. Each person can register, log in, and manage their own task list.
 
-**Authors:** Cambel, Gelvezon
+**Authors:** Cambel (ed-cambel), Gelvezon (thoenii)
 
 ## Features
 
@@ -88,55 +88,55 @@ python -m pytest -v
 The tests create accounts with the email domain `@test.invalid` and delete them before and after each test.
 
 ## Database setup
- 
+
 1. Start **MySQL** (and Apache, if you want phpMyAdmin) in XAMPP.
 2. Open `http://localhost/phpmyadmin` and create a database named **`todo_app`**.
 3. Select `todo_app`, open the **Import** tab (or the **SQL** tab), and run `schema.sql`.
-> `schema.sql` starts with `DROP TABLE IF EXISTS`, so running it again deletes all existing accounts and tasks.
- 
+   > `schema.sql` starts with `DROP TABLE IF EXISTS`, so running it again deletes all existing accounts and tasks.
+
 The database connection settings (host `localhost`, user `root`, database `todo_app`) are in `DB_CONFIG` in `database.py`. The password comes from `.env`.
- 
+
 **Tables**
- 
-| Table | Columns |
-|---|---|
-| `users` | `id` (PK), `email` (unique), `display_name`, `password_hash`, `created_at` |
+
+| Table   | Columns                                                                                                                                                |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `users` | `id` (PK), `email` (unique), `display_name`, `password_hash`, `created_at`                                                                             |
 | `tasks` | `id` (PK), `user_id` (FK to `users.id`, `ON DELETE CASCADE`), `title`, `due_date`, `due_time`, `priority`, `tag`, `completed`, `deleted`, `created_at` |
 
 ## Routes and database operations
- 
+
 **Authentication and account**
- 
-| Method | Route | Description | Auth |
-|---|---|---|---|
-| GET | `/` | Redirects to `/profile` if logged in, otherwise `/login` | No |
-| GET, POST | `/register` | Show the form; validate, hash the password, and create the user | No |
-| GET, POST | `/login` | Show the form; verify the password hash and start a session | No |
-| POST | `/logout` | Clear the session | Yes |
-| GET | `/profile` | Greeting, account details, and activity counts | Yes |
-| POST | `/profile/edit` | Update the display name | Yes |
-| POST | `/profile/password` | Change the password (needs the current password) | Yes |
-| POST | `/profile/delete` | Delete the account and its tasks | Yes |
- 
+
+| Method    | Route               | Description                                                     | Auth |
+| --------- | ------------------- | --------------------------------------------------------------- | ---- |
+| GET       | `/`                 | Redirects to `/profile` if logged in, otherwise `/login`        | No   |
+| GET, POST | `/register`         | Show the form; validate, hash the password, and create the user | No   |
+| GET, POST | `/login`            | Show the form; verify the password hash and start a session     | No   |
+| POST      | `/logout`           | Clear the session                                               | Yes  |
+| GET       | `/profile`          | Greeting, account details, and activity counts                  | Yes  |
+| POST      | `/profile/edit`     | Update the display name                                         | Yes  |
+| POST      | `/profile/password` | Change the password (needs the current password)                | Yes  |
+| POST      | `/profile/delete`   | Delete the account and its tasks                                | Yes  |
+
 **Tasks** (all require login and only touch the current user's tasks)
- 
-| Method | Route | Description |
-|---|---|---|
-| GET | `/tasks` | List tasks. Query parameters: `tab`, `view`, `priority`, `tag` |
-| POST | `/add` | Create a task |
-| POST | `/edit/<id>` | Update a task |
-| POST | `/complete/<id>` | Toggle completed |
-| POST | `/delete/<id>` | Soft delete a task |
-| POST | `/restore/<id>` | Restore a soft-deleted task |
- 
+
+| Method | Route            | Description                                                    |
+| ------ | ---------------- | -------------------------------------------------------------- |
+| GET    | `/tasks`         | List tasks. Query parameters: `tab`, `view`, `priority`, `tag` |
+| POST   | `/add`           | Create a task                                                  |
+| POST   | `/edit/<id>`     | Update a task                                                  |
+| POST   | `/complete/<id>` | Toggle completed                                               |
+| POST   | `/delete/<id>`   | Soft delete a task                                             |
+| POST   | `/restore/<id>`  | Restore a soft-deleted task                                    |
+
 **Database operations** (`database.py`)
- 
+
 - Users: `create_user`, `get_user_by_email`, `get_user_by_id`, `update_display_name`, `update_password_hash`, `delete_user`
 - Tasks: `add_task`, `get_task`, `get_all_tasks`, `update_task`, `delete_task`, `restore_task`, `toggle_task`, `get_task_stats`
-Every task function takes a `user_id` and includes it in its `WHERE` clause, so changing an ID in a URL can't read or modify another user's task. All queries use `%s` placeholders to prevent SQL injection.
- 
+  Every task function takes a `user_id` and includes it in its `WHERE` clause, so changing an ID in a URL can't read or modify another user's task. All queries use `%s` placeholders to prevent SQL injection.
+
 ## Session mechanism
- 
+
 - **Storage:** Flask's `session` is a cookie in the browser holding the user's ID. The cookie is signed with `SECRET_KEY`, so it can't be changed without the key. The server stores no session data, which is why restarting the server doesn't log anyone out.
 - **Login:** after the password hash is verified, the session is cleared (to discard any older session), the user's ID is stored, and `session.permanent = True` is set.
 - **Persistence:** permanent sessions get an expiry date of **7 days** (`app.permanent_session_lifetime`), so the login survives page refreshes and browser restarts. The 7 days count from the user's last request.
@@ -145,9 +145,9 @@ Every task function takes a `user_id` and includes it in its `WHERE` clause, so 
 - **Expiry:** the session also ends if the user clears their cookies, if `SECRET_KEY` changes, or after 7 days without a visit.
 
 ## Password hashing
- 
+
 Passwords are hashed with Werkzeug's `generate_password_hash`, which adds a random salt (the algorithm is scrypt or pbkdf2, depending on the installed version). The plain password is never stored or logged. Login compares the entered password against the stored hash with `check_password_hash`. The failure message is the same for an unknown email and a wrong password.
- 
+
 ## Password recovery
 
 Password reset tokens are generated and stored in the database as SHA-256 hashes, rather than the original tokens. The reset link containing the original token is sent to the user's registered email through SMTP, and it expires after 30 minutes. Once verified, user can set a new password, which is hashed using Werkzeugs `generate_password_hash` before being stored. The used token is deleted with `delete_reset_token` to prevent reuse. If STMP is not configured or sending fails, the reset link is printed in the terminal for local testing.
