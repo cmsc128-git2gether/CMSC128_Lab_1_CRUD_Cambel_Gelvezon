@@ -28,15 +28,18 @@
             <nav class="view-menu">
                 <p class="view-title">Views</p>
 
-                <a href="/?tab=all&view={{ view_mode }}" class="{{ 'active' if tab == 'all' }} view-item">
+                <a href="{{ url_for('index', tab='all', view=view_mode) }}"
+                    class="{{ 'active' if tab == 'all' }} view-item">
                     <p class="view-name">All</p>
                     <p class="view-value">{{ total_count }}</p>
                 </a>
-                <a href="/?tab=ongoing&view={{ view_mode }}" class="{{ 'active' if tab == 'ongoing' }} view-item">
+                <a href="{{ url_for('index', tab='ongoing', view=view_mode) }}"
+                    class="{{ 'active' if tab == 'ongoing' }} view-item">
                     <p class="view-name">Ongoing</p>
                     <p class="view-value">{{ open_count }}</p>
                 </a>
-                <a href="/?tab=completed&view={{ view_mode }}" class="{{ 'active' if tab == 'completed' }} view-item">
+                <a href="{{ url_for('index', tab='completed', view=view_mode) }}"
+                    class="{{ 'active' if tab == 'completed' }} view-item">
                     <p class="view-name">Completed</p>
                     <p class="view-value">{{ done_count }}</p>
                 </a>
