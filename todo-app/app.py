@@ -106,11 +106,11 @@ def index():
         query += ' AND completed = 1'
     
     if priority_filter:
-        query += ' AND priority = ?'
+        query += ' AND priority = %s'
         params.append(priority_filter)
 
     if tag_filter:
-        query += ' AND tag = ?'
+        query += ' AND tag = %s'
         params.append(tag_filter)
         
     # Displays tasks in a specific order
@@ -247,6 +247,7 @@ def update(task_id):
     
     update_task(
         task_id,
+        session["user_id"],
         title,
         due_date,
         due_time,
