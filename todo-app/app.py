@@ -395,6 +395,17 @@ def change_password():
 @app.route('/profile/delete', methods=['POST'])
 @login_required
 def delete_account():
+    password = request.form.get('delete_password', '')
+    user = get_user_by_id(session["user_id"])
+
+    if user is None:
+        session.clear()
+        return redirect(url_for("login"))
+
+    if not check_password_hash(user["password_hash"], password):
+        flash("Incorrect password. Your account was not deleted.", "error")
+        return redirect(url_for('profile'))
+    
     delete_user(session["user_id"])
     session.clear()
     flash("Your account has been deleted.", "success")

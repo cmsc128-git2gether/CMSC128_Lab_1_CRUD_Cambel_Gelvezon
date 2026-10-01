@@ -162,21 +162,35 @@
         </section>
 
         <section class="profile-card danger-card">
-            <div class="card-head">
-                <h2>Danger zone</h2>
-            </div>
-            <div class="card-body danger-row">
-                <div>
-                    <p class="danger-title">Delete account</p>
-                    <p class="danger-desc">Permanently remove your account and all your tasks.</p>
+            <details class="security-details" id="delete-details">
+                <summary class="card-head">
+                    <h2>Danger zone</h2>
+                    <span class="profile-btn danger"><i class="bi bi-trash"></i>Delete account</span>
+                </summary>
+                <div class="card-body">
+                    <p class="danger-desc">Permanently remove your account and all your tasks. Enter your password to
+                        confirm.
+                    </p>
+                    <form method="POST" action="{{ url_for('delete_account') }}" class="profile-form">
+                        <div class="field">
+                            <label for="delete_password">Password</label>
+                            <div class="password-field">
+                                <input type="password" id="delete_password" name="delete_password"
+                                    autocomplete="current-password" required>
+                                <button type="button" class="toggle-password" aria-label="Show password">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            <p class="field-error"></p>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="profile-btn danger">Delete my account</button>
+                            <button type="button" class="profile-btn" data-close="delete-details">Cancel</button>
+                        </div>
+                    </form>
                 </div>
-                <form method="POST" action="{{ url_for('delete_account') }}"
-                    onsubmit="return confirm('Delete your account and all your tasks? This can\'t be undone.');">
-                    <button type="submit" class="profile-btn danger">Delete account</button>
-                </form>
-            </div>
+            </details>
         </section>
-
     </main>
 
 
