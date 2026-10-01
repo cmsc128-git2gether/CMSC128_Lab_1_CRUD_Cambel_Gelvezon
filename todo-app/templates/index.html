@@ -59,6 +59,17 @@
                         <p class="stat-value">{{ done_count }}</p>
                     </div>
                 </section>
+
+                {% if user %}
+                <a href="{{ url_for('profile') }}" class="sidebar-profile">
+                    <span class="sidebar-avatar" aria-hidden="true">{{ (user.display_name or '?')[0] | upper }}</span>
+                    <span class="sidebar-user">
+                        <span class="sidebar-user-name">{{ user.display_name }}</span>
+                        <span class="sidebar-user-sub">View profile</span>
+                    </span>
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+                {% endif %}
             </section>
         </section>
 

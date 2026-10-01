@@ -10,36 +10,175 @@
         @view-transition {
             navigation: auto;
         }
-    
-        </style>
+    </style>
 </head>
 
-<body>
-    <h1>Hello, {{ user.dispplay_name }}</h1>
+<body class="profile-page">
+    <header class="nav-header">
+        <div class="logo">
+            <i class="bi bi-braces-asterisk header-icon"></i>
+            <span class="header-name">Tutuman</span>
+        </div>
 
-    <!-- TODO: implement template for login; EXPANDED REQ -->
+        <nav class="actions">
+            <a class="header-btn task-redirect-btn" href="{{ url_for('index') }}">
+                <i class="bi bi-list-check"></i>My tasks
+            </a>
+            <form method="POST" action="{{ url_for('logout') }}">
+                <button type="submit" class="header-btn ghost logout">
+                    <i class="bi bi-box-arrow-right"></i>Log out
+                </button>
+            </form>
+        </nav>
+    </header>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    {% for category, message in messages %}
-    <p class="message {{ category }}">{{ message }}</p>
-    {% endfor %}
-    {% endif %}
-    {% endwith %}
+    <main class="profile-main">
 
-    <section>
-        <h2>Your details</h2>
-        <p>Display name: {{ user.display_name }}</p>
-        <p>Email: {{ user.email }}</p>
-        <p>Member since: {{ user.created_at.strftime('%b %d, %Y') if user.created_at else '' }}</p>
-    </section>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <p class="message {{ category }}">{{ message }}</p>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
 
-    <p><a href="{{ url_for('index') }}">Go to my to-do list</a></p>
+        <section class="profile-card profile-header">
+            <div class="profile-avatar" aria-hidden="true">
+                {{ (user.display_name or '?')[0] | upper }}
+            </div>
+            <div class="profile-identity">
+                <h1 class="profile-name">{{ user.display_name }}</h1>
+                <p class="profile-email">{{ user.email }}</p>
+            </div>
+        </section>
 
-    <form method="POST" action="{{ url_for('logout') }}">
-        <button type="submit">Log out</button>
-    </form>
+        <section class="profile-card">
+            <details class="security-details" id="edit-details">
+                <summary class="card-head">
+                    <h2>Personal information</h2>
+                    <span class="profile-btn"><i class="bi bi-pencil"></i>Edit profile</span>
+                </summary>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('edit_profile') }}" class="profile-form">
+                        <div class="field">
+                            <label for="new_display_name">Display name</label>
+                            <input type="text" id="new_display_name" name="display_name" value="{{ user.display_name }}"
+                                maxlength="100" required>
+                            <p class="field-error"></p>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="profile-btn primary">Save</button>
+                            <button type="button" class="profile-btn" data-close="edit-details">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </details>
+            <dl class="info-grid card-body">
+                <div>
+                    <dt>Display name</dt>
+                    <dd>{{ user.display_name }}</dd>
+                </div>
+                <div>
+                    <dt>Email</dt>
+                    <dd>{{ user.email }}</dd>
+                </div>
+            </dl>
+        </section>
 
-    
+        <section class="profile-card">
+            <details class="security-details" id="security-details">
+                <summary class="card-head">
+                    <h2>Security</h2>
+                    <span class="profile-btn"><i class="bi bi-lock"></i>Change password</span>
+                </summary>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('change_password') }}" class="profile-form">
+                        <div class="field">
+                            <label for="current_password">Current password</label>
+                            <div class="password-field">
+                                <input type="password" id="current_password" name="current_password"
+                                    autocomplete="current-password" required>
+                                <button type="button" class="toggle-password" aria-label="Show password">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            <p class="field-error"></p>
+                        </div>
+                        <div class="field">
+                            <label for="new_password">New password</label>
+                            <div class="password-field">
+                                <input type="password" id="new_password" name="new_password" minlength="8"
+                                    autocomplete="new-password" required>
+                                <button type="button" class="toggle-password" aria-label="Show password">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            <p class="field-error"></p>
+                        </div>
+                        <div class="field">
+                            <label for="confirm_new_password">Confirm new password</label>
+                            <div class="password-field">
+                                <input type="password" id="confirm_new_password" name="confirm_new_password"
+                                    minlength="8" autocomplete="new-password" required>
+                                <button type="button" class="toggle-password" aria-label="Show password">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            <p class="field-error"></p>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="profile-btn primary">Save password</button>
+                            <button type="button" class="profile-btn" data-close="security-details">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </details>
+        </section>
+
+        <section class="profile-card">
+            <div class="card-head">
+                <h2>Activity</h2>
+            </div>
+            <div class="card-body">
+                <dl class="stats-grid">
+                    <div>
+                        <dd>{{ stats.total if stats else 0 }}</dd>
+                        <dt>Tasks created</dt>
+                    </div>
+                    <div>
+                        <dd>{{ stats.done if stats else 0 }}</dd>
+                        <dt>Completed</dt>
+                    </div>
+                    <div>
+                        <dd>{{ stats.open if stats else 0 }}</dd>
+                        <dt>Open</dt>
+                    </div>
+                    <div>
+                        <dd>{{ stats.overdue if stats else 0 }}</dd>
+                        <dt>Overdue</dt>
+                    </div>
+                </dl>
+            </div>
+        </section>
+
+        <section class="profile-card danger-card">
+            <div class="card-head">
+                <h2>Danger zone</h2>
+            </div>
+            <div class="card-body danger-row">
+                <div>
+                    <p class="danger-title">Delete account</p>
+                    <p class="danger-desc">Permanently remove your account and all your tasks.</p>
+                </div>
+                <form method="POST" action="{{ url_for('delete_account') }}"
+                    onsubmit="return confirm('Delete your account and all your tasks? This can\'t be undone.');">
+                    <button type="submit" class="profile-btn danger">Delete account</button>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>

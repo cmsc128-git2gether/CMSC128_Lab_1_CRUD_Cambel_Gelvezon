@@ -14,10 +14,15 @@ from database import (
     get_task,
     update_task,
     delete_task,
+    restore_task,
     toggle_task,
     get_user_by_email,
     get_user_by_id,
-    create_user
+    create_user,
+    update_display_name,
+    update_password_hash,
+    delete_user,
+    get_task_stats,
 )
 
 load_dotenv()
@@ -77,17 +82,23 @@ def index():
     view_mode = request.args.get('view', 'list')
     priority_filter = request.args.get('priority', '')
     tag_filter = request.args.get('tag', '')
+    user = get_user_by_id(session["user_id"])
+    user_id = session["user_id"]
+    
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    cursor.execute("SELECT * FROM tasks")
+    cursor.execute("SELECT * FROM tasks WHERE user_id = %s AND deleted = 0",
+        (user_id,)
+    )
+    
     all_tasks = cursor.fetchall()
     total_count = len(all_tasks)
     open_count = sum(1 for t in all_tasks if t['completed'] == 0)
     done_count = sum(1 for t in all_tasks if t['completed'] == 1)
 
-    query = 'SELECT * FROM tasks WHERE deleted = 0'
-    params = []
+    query = 'SELECT * FROM tasks WHERE user_id = %s AND deleted = 0'
+    params = [user_id]
     
     if tab == 'ongoing':
         query += ' AND completed = 0'
@@ -114,7 +125,7 @@ def index():
             due_date ASC,
             due_time ASC
     '''
-    cursor.execute(query)
+    cursor.execute(query, params)
     tasks = cursor.fetchall()
 
     cursor.close()
@@ -176,14 +187,14 @@ def index():
         total_count=total_count,
         open_count=open_count,
         done_count=done_count,
-        date_range=date_range
+        date_range=date_range,
+        user=user,
     )
 
 # For adding tasks
 @app.route('/add', methods=['POST'])
 @login_required
 def add():
-    
     title = request.form['title']
     due_date = request.form.get('due_date') or None
     due_time = request.form.get('due_time') or None
@@ -192,6 +203,7 @@ def add():
 
     
     add_task(
+        session["user_id"],
         title,
         due_date,
         due_time, 
@@ -205,7 +217,7 @@ def add():
 @app.route('/complete/<int:task_id>', methods=['POST'])
 @login_required
 def toggle(task_id):
-    toggle_task(task_id) 
+    toggle_task(task_id, session["user_id"],) 
     
     return redirect(url_for('index'))
 
@@ -213,14 +225,14 @@ def toggle(task_id):
 @app.route('/delete/<int:task_id>', methods=['DELETE'])
 @login_required
 def delete(task_id):
-    delete_task(task_id)
+    delete_task(task_id, session["user_id"],)
     return '', 204
 
 # For deleting tasks
 @app.route('/restore/<int:task_id>', methods=['POST'])
 @login_required
 def restore(task_id):
-    restore_task(task_id)
+    restore_task(task_id, session["user_id"],)
     return '', 204
 
 # For editing task and updating values of edited tasks
@@ -326,13 +338,73 @@ def profile():
     if user is None:
         session.clear()
         return redirect(url_for("login"))
-    return render_template('profile.html', user=user)
+    stats = get_task_stats(user["id"])
+    return render_template('profile.html', user=user, stats=stats)
+
+@app.route('/profile/edit', methods=['POST'])
+@login_required
+def edit_profile():
+    display_name = request.form.get('display_name', '').strip()
+
+    if not display_name:
+        flash("Display name can't be empty.", "error")
+    elif len(display_name) > 100:
+        flash("Display name must be 100 characters or fewer.", "error")
+    else:
+        update_display_name(session["user_id"], display_name)
+        flash("Display name updated.", "success")
+
+    return redirect(url_for('profile'))
+
+
+@app.route('/profile/password', methods=['POST'])
+@login_required
+def change_password():
+    current_password = request.form.get('current_password', '')
+    new_password = request.form.get('new_password', '')
+    confirm_new_password = request.form.get('confirm_new_password', '')
+
+    user = get_user_by_id(session["user_id"])
+
+    if user is None:
+        session.clear()
+        return redirect(url_for("login"))
+
+    if not check_password_hash(user["password_hash"], current_password):
+        flash("Current password is incorrect.", "error")
+    elif len(new_password) < MIN_PASSWORD_LENGTH:
+        flash(f"New password must be at least {MIN_PASSWORD_LENGTH} characters.", "error")
+    elif new_password != confirm_new_password:
+        flash("New passwords do not match.", "error")
+    elif new_password == current_password:
+        flash("New password must be different from the current one.", "error")
+    else:
+        update_password_hash(user["id"], generate_password_hash(new_password))
+        flash("Password updated.", "success")
+
+    return redirect(url_for('profile'))
+
+
+@app.route('/profile/delete', methods=['POST'])
+@login_required
+def delete_account():
+    delete_user(session["user_id"])
+    session.clear()
+    flash("Your account has been deleted.", "success")
+    return redirect(url_for('login'))
 
 @app.route('/logout', methods=['POST'])
 def logout():
     session.clear()
     flash("You have been logged out.", "success")
     return redirect(url_for("login"))
+
+@app.route('/edit_profile', methods=['POST'])
+def lo():
+    session.clear()
+    flash("You have been logged out.", "success")
+    return redirect(url_for("login"))
+
 
 if __name__ == '__main__':
     app.run(debug=True)   

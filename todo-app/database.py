@@ -59,7 +59,7 @@ def init_db():
 
 
 # Adding a task
-def add_task(title, due_date, due_time, priority, tag):
+def add_task(user_id, title, due_date, due_time, priority, tag):
     conn = get_db_connection()
 
     if conn is None:
@@ -70,10 +70,10 @@ def add_task(title, due_date, due_time, priority, tag):
     cursor.execute(
         """
         INSERT INTO tasks
-        (title, due_date, due_time, priority, tag)
-        VALUES (%s, %s, %s, %s, %s)
+        (user_id, title, due_date, due_time, priority, tag)
+        VALUES (%s, %s, %s, %s, %s, %s)
         """,
-        (title, due_date, due_time, priority, tag)
+        (user_id, title, due_date, due_time, priority, tag)
     )
 
     conn.commit()
@@ -83,7 +83,7 @@ def add_task(title, due_date, due_time, priority, tag):
 
 
 # Returns one single task based on task_id
-def get_task(task_id):
+def get_task(task_id, user_id):
     conn = get_db_connection()
 
     if conn is None:
@@ -92,8 +92,8 @@ def get_task(task_id):
     cursor = conn.cursor(dictionary=True)
 
     cursor.execute(
-        "SELECT * FROM tasks WHERE id = %s",
-        (task_id,)
+        "SELECT * FROM tasks WHERE id = %s and user_id = %s",
+        (task_id, user_id)
     )
 
     task = cursor.fetchone()
@@ -105,7 +105,7 @@ def get_task(task_id):
 
 
 # Returns all tasks
-def get_all_tasks():
+def get_all_tasks(user_id):
     conn = get_db_connection()
 
     if conn is None:
@@ -117,8 +117,10 @@ def get_all_tasks():
         """
         SELECT *
         FROM tasks
+        WHERE user_id = %s
         ORDER BY completed ASC, due_date ASC, due_time ASC, created_at DESC
-        """
+        """,
+        (user_id,)
     )
 
     tasks = cursor.fetchall()
@@ -130,7 +132,7 @@ def get_all_tasks():
 
 
 # Update edited tasks
-def update_task(task_id, title, due_date, due_time, priority, tag):
+def update_task(task_id, user_id, title, due_date, due_time, priority, tag):
     conn = get_db_connection()
 
     if conn is None:
@@ -146,9 +148,9 @@ def update_task(task_id, title, due_date, due_time, priority, tag):
             due_time = %s,
             priority = %s,
             tag = %s
-        WHERE id = %s
+        WHERE id = %s AND user_id = %s
         """,
-        (title, due_date, due_time, priority, tag, task_id)
+        (title, due_date, due_time, priority, tag, task_id, user_id)
     )
 
     conn.commit()
@@ -158,7 +160,7 @@ def update_task(task_id, title, due_date, due_time, priority, tag):
 
 
 # Delete task
-def delete_task(task_id):
+def delete_task(task_id, user_id):
     conn = get_db_connection()
 
     if conn is None:
@@ -167,8 +169,8 @@ def delete_task(task_id):
     cursor = conn.cursor()
 
     cursor.execute(
-        "DELETE FROM tasks WHERE id = %s",
-        (task_id,)
+        "UPDATE tasks SET deleted = 1 WHERE id = %s AND user_id = %s",
+        (task_id, user_id,)
     )
 
     conn.commit()
@@ -176,9 +178,21 @@ def delete_task(task_id):
     cursor.close()
     conn.close()
 
-
+def restore_task(task_id, user_id):
+    conn = get_db_connection()
+    if conn is None:
+        return
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE tasks SET deleted = 0 WHERE id = %s AND user_id = %s",
+        (task_id, user_id)
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
 # Mark task as complete / incomplete
-def toggle_task(task_id):
+def toggle_task(task_id, user_id):
     conn = get_db_connection()
 
     if conn is None:
@@ -193,9 +207,9 @@ def toggle_task(task_id):
             WHEN completed = 0 THEN 1
             ELSE 0
         END
-        WHERE id = %s
+        WHERE id = %s AND user_id = %s
         """,
-        (task_id,)
+        (task_id, user_id)
     )
 
     conn.commit()
@@ -229,7 +243,7 @@ def get_user_by_email(email):
     conn.close()
     return user
 
-
+# find user and get info in db using id
 def get_user_by_id(user_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -238,3 +252,57 @@ def get_user_by_id(user_id):
     cursor.close()
     conn.close()
     return user
+
+# for edit profile function
+def update_display_name(user_id, display_name):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE users SET display_name = %s WHERE id = %s",
+        (display_name, user_id)
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+
+def update_password_hash(user_id, password_hash):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE users SET password_hash = %s WHERE id = %s",
+        (password_hash, user_id)
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+
+def delete_user(user_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+
+def get_task_stats(user_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(
+        """
+        SELECT
+            COUNT(*) AS total,
+            COALESCE(SUM(completed = 1), 0) AS done,
+            COALESCE(SUM(completed = 0), 0) AS open,
+            COALESCE(SUM(completed = 0 AND due_date < CURDATE()), 0) AS overdue
+        FROM tasks
+        WHERE user_id = %s
+        """,
+        (user_id,)
+    )
+    stats = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    return stats

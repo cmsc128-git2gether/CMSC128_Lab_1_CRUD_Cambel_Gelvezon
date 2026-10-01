@@ -184,6 +184,127 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+document.addEventListener('DOMContentLoaded', () => {
+    if (!document.querySelector('.profile-page')) return;
+
+    // ---------- show / hide password ----------
+    document.querySelectorAll('.profile-page .toggle-password').forEach((button) => {
+        const input = button.parentElement.querySelector('input');
+        const icon = button.querySelector('i');
+
+        button.addEventListener('click', () => {
+            const showing = input.type === 'text';
+            input.type = showing ? 'password' : 'text';
+            icon.className = showing ? 'bi bi-eye' : 'bi bi-eye-slash';
+            button.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+        });
+    });
+
+    // ---------- validation rules ----------
+    const rules = {
+        display_name(value) {
+            const name = value.trim();
+            if (!name) return 'Display name is required.';
+            if (name.length > 100) return 'Display name must be 100 characters or fewer.';
+            return '';
+        },
+        current_password(value) {
+            return value ? '' : 'Enter your current password.';
+        },
+        new_password(value, form) {
+            if (!value) return 'Enter a new password.';
+            const min = form.elements.new_password.minLength;
+            if (min > 0 && value.length < min) {
+                return `Password must be at least ${min} characters.`;
+            }
+            if (value === form.elements.current_password.value) {
+                return 'New password must be different from the current one.';
+            }
+            return '';
+        },
+        confirm_new_password(value, form) {
+            if (!value) return 'Please confirm your new password.';
+            if (value !== form.elements.new_password.value) return 'Passwords do not match.';
+            return '';
+        },
+    };
+
+    function showError(input, message) {
+        const errorEl = input.closest('.field')?.querySelector('.field-error');
+        if (errorEl) errorEl.textContent = message;
+        input.classList.toggle('invalid', message !== '');
+        input.setAttribute('aria-invalid', message !== '');
+    }
+
+    function validateField(input, form) {
+        const rule = rules[input.name];
+        if (!rule) return '';
+        const message = rule(input.value, form);
+        showError(input, message);
+        return message;
+    }
+
+    function resetForm(form) {
+        form.reset();
+        form.querySelectorAll('input').forEach((input) => showError(input, ''));
+        form.querySelectorAll('.toggle-password').forEach((button) => {
+            button.parentElement.querySelector('input').type = 'password';
+            button.querySelector('i').className = 'bi bi-eye';
+            button.setAttribute('aria-label', 'Show password');
+        });
+    }
+
+    // ---------- set up each profile form ----------
+    document.querySelectorAll('.profile-form').forEach((form) => {
+        form.noValidate = true;
+
+        const fields = Array.from(form.querySelectorAll('input')).filter((i) => rules[i.name]);
+
+        fields.forEach((input) => {
+            input.addEventListener('blur', () => validateField(input, form));
+
+            input.addEventListener('input', () => {
+                if (input.classList.contains('invalid')) validateField(input, form);
+
+                if (input.name === 'new_password' || input.name === 'current_password') {
+                    const confirm = form.elements.confirm_new_password;
+                    if (confirm?.value) validateField(confirm, form);
+
+                    const newPassword = form.elements.new_password;
+                    if (input.name === 'current_password' && newPassword?.classList.contains('invalid')) {
+                        validateField(newPassword, form);
+                    }
+                }
+            });
+        });
+
+        form.addEventListener('submit', (event) => {
+            let firstInvalid = null;
+
+            fields.forEach((input) => {
+                if (validateField(input, form) && !firstInvalid) firstInvalid = input;
+            });
+
+            if (firstInvalid) {
+                event.preventDefault();
+                firstInvalid.focus();
+            }
+        });
+    });
+
+    // ---------- Cancel buttons ----------
+    document.querySelectorAll('.profile-page [data-close]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const details = document.getElementById(button.dataset.close);
+            if (!details) return;
+
+            details.open = false;
+            const form = details.querySelector('form');
+            if (form) resetForm(form);
+        });
+    });
+});
+
 // delete task function
 // For Deleting a Task
 const deleteModal = document.getElementById("deleteConfirmModal");
