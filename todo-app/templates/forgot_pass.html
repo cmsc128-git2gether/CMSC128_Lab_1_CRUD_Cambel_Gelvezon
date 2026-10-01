@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forgot Password | Tutuman</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <style>
+        @view-transition {
+            navigation: auto;
+        }
+    </style>
+</head>
+
+<body class="auth-page">
+    <div class="auth-card">
+        <div class="auth-header">
+            <i class="bi bi-braces-asterisk auth-header-icon"></i>
+            <p class="auth-header-name">Tutuman</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <p class="message {{ category }}">{{ message }}</p>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <form class="auth-form" method="POST" action="{{ url_for('forgot_password') }}">
+            <p class="auth-footer" style="margin: 0 0 var(--spacing-md); text-align: left;">
+                Enter your account email and we'll send you a link to reset your password.
+            </p>
+
+            <div class="field">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="you@example.com" required>
+                <p class="field-error"></p>
+            </div>
+
+            <button type="submit">Send reset link</button>
+        </form>
+
+        <p class="auth-footer">
+            Remembered it?
+            <a href="{{ url_for('login') }}">Back to log in</a>
+        </p>
+
+    </div>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+
+</html>

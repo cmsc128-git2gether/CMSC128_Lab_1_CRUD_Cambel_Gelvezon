@@ -1,6 +1,7 @@
 # database.py communicates with MySQL
 import mysql.connector
 import os
+import hashlib
 from dotenv import load_dotenv
 from mysql.connector import Error
 
@@ -265,7 +266,7 @@ def update_display_name(user_id, display_name):
     cursor.close()
     conn.close()
 
-
+# update password hash for reset password function
 def update_password_hash(user_id, password_hash):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -277,7 +278,7 @@ def update_password_hash(user_id, password_hash):
     cursor.close()
     conn.close()
 
-
+# permanently delete user account
 def delete_user(user_id):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -286,7 +287,7 @@ def delete_user(user_id):
     cursor.close()
     conn.close()
 
-
+# get statustics for a user
 def get_task_stats(user_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -306,3 +307,49 @@ def get_task_stats(user_id):
     cursor.close()
     conn.close()
     return stats
+
+# convert a reset token into a hash
+def _hash_token(token):
+    return hashlib.sha256(token.encode()).hexdigest()
+
+# create a password reset token for user
+def create_reset_token(user_id, token, minutes=30):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    #one active link per user, delete any existing tokens for the user
+    cursor.execute("DELETE FROM password_resets WHERE user_id = %s", (user_id,))
+    cursor.execute(
+        """
+        INSERT INTO password_resets (user_id, reset_token, expires_at)
+        VALUES (%s, %s, DATE_ADD(NOW(), INTERVAL %s MINUTE))
+        """,
+        (user_id, _hash_token(token), minutes)
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+# check for validity if the token exists 
+def get_valid_reset(token):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(
+        """
+        SELECT * FROM password_resets
+        WHERE reset_token = %s AND expires_at > NOW()
+        """,
+        (_hash_token(token),)
+    )
+    reset_entry = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    return reset_entry
+
+# delete a reset token after it has been used
+def delete_reset_token(reset_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM password_resets WHERE id = %s", (reset_id,))
+    conn.commit()
+    cursor.close()
+    conn.close()
