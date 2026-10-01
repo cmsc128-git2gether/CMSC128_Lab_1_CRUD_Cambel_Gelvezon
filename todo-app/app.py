@@ -318,6 +318,7 @@ def register():
     flash("Account created. Please log in.", "success")
     return redirect(url_for('login'))
 
+# Display the login form or authenticate the submitted credentials.
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if "user_id" in session:
@@ -339,6 +340,7 @@ def login():
     session["user_id"] = user["id"]
     return redirect(url_for("profile"))
 
+# Profile page shows the current user's account details
 @app.route('/profile')
 def profile():
     user = get_user_by_id(session["user_id"])
@@ -348,6 +350,7 @@ def profile():
     stats = get_task_stats(user["id"])
     return render_template('profile.html', user=user, stats=stats)
 
+# Edit profile updates the display name submitted from the profile form.
 @app.route('/profile/edit', methods=['POST'])
 @login_required
 def edit_profile():
@@ -363,20 +366,22 @@ def edit_profile():
 
     return redirect(url_for('profile'))
 
-
+# Verify the current password before saving a new one.
 @app.route('/profile/password', methods=['POST'])
 @login_required
 def change_password():
     current_password = request.form.get('current_password', '')
     new_password = request.form.get('new_password', '')
     confirm_new_password = request.form.get('confirm_new_password', '')
-
+    
+    # Load the user's stored password hash for verification.
     user = get_user_by_id(session["user_id"])
 
     if user is None:
         session.clear()
         return redirect(url_for("login"))
 
+    # Validate the current password, new password length, and confirmation
     if not check_password_hash(user["password_hash"], current_password):
         flash("Current password is incorrect.", "error")
     elif len(new_password) < MIN_PASSWORD_LENGTH:
@@ -391,7 +396,7 @@ def change_password():
 
     return redirect(url_for('profile'))
 
-
+# Remove the user's account and end their session.
 @app.route('/profile/delete', methods=['POST'])
 @login_required
 def delete_account():
@@ -400,18 +405,21 @@ def delete_account():
     flash("Your account has been deleted.", "success")
     return redirect(url_for('login'))
 
+# End the current session and return the user to the login page
 @app.route('/logout', methods=['POST'])
 def logout():
     session.clear()
     flash("You have been logged out.", "success")
     return redirect(url_for("login"))
 
+# This route currently clears the session and behaves like a logout endpoint
 @app.route('/edit_profile', methods=['POST'])
 def login_required():
     session.clear()
     flash("You have been logged out.", "success")
     return redirect(url_for("login"))
 
+# Accept an email and send a reset link if an account exists
 @app.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'GET':
@@ -428,7 +436,8 @@ def forgot_password():
         
     flash("A password reset link has been sent to your email.", "success")
     return redirect(url_for('login'))
-    
+
+# Validate the token, then allow the user to choose a new password.
 @app.route('/reset-password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
     reset = get_valid_reset(token)
@@ -450,6 +459,7 @@ def reset_password(token):
         flash("New passwords do not match.", "error")
         return render_template('reset_pass.html', token=token)
     
+    # Save the hashed password, then delete the used token so it cannot be reused.
     update_password_hash(reset["user_id"], generate_password_hash(new_password))
     delete_reset_token(reset["id"])
     flash("Your password has been reset successfully.", "success")

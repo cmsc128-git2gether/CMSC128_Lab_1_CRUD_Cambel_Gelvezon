@@ -266,7 +266,7 @@ def update_display_name(user_id, display_name):
     cursor.close()
     conn.close()
 
-
+# update password hash for reset password function
 def update_password_hash(user_id, password_hash):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -278,7 +278,7 @@ def update_password_hash(user_id, password_hash):
     cursor.close()
     conn.close()
 
-
+# permanently delete user account
 def delete_user(user_id):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -287,7 +287,7 @@ def delete_user(user_id):
     cursor.close()
     conn.close()
 
-
+# get statustics for a user
 def get_task_stats(user_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -308,9 +308,11 @@ def get_task_stats(user_id):
     conn.close()
     return stats
 
+# convert a reset token into a hash
 def _hash_token(token):
     return hashlib.sha256(token.encode()).hexdigest()
 
+# create a password reset token for user
 def create_reset_token(user_id, token, minutes=30):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -326,7 +328,8 @@ def create_reset_token(user_id, token, minutes=30):
     conn.commit()
     cursor.close()
     conn.close()
-    
+
+# check for validity if the token exists 
 def get_valid_reset(token):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -342,6 +345,7 @@ def get_valid_reset(token):
     conn.close()
     return reset_entry
 
+# delete a reset token after it has been used
 def delete_reset_token(reset_id):
     conn = get_db_connection()
     cursor = conn.cursor()
