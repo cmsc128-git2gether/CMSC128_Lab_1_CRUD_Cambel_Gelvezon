@@ -934,6 +934,13 @@
                 }
             }
 
+            .forgot-link {
+                display: block;
+                text-align: right;
+                font-size: 0.85rem;
+                margin-top: 0.4rem;
+            }
+
             button[type="submit"] {
                 min-height: 44px;
                 margin-top: var(--spacing-xs);
