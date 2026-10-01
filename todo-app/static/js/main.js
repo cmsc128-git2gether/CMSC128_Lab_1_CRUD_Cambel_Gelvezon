@@ -88,6 +88,102 @@ if (editTaskModal) {
     });
 }
 
+// ------------- LAB 2 FUNCTION ------------- //
+
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.querySelector('.auth-form');
+    if (!form) return;
+
+    form.noValidate = true;
+
+    // show / hide password
+    form.querySelectorAll('.toggle-password').forEach((button) => {
+        const input = button.parentElement.querySelector('input');
+        const icon = button.querySelector('i');
+
+        button.addEventListener('click', () => {
+            const showing = input.type === 'text';
+            input.type = showing ? 'password' : 'text';
+            icon.className = showing ? 'bi bi-eye' : 'bi bi-eye-slash';
+            button.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+        });
+    });
+
+    // form validation
+    const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+    const isRegister = !!form.elements.confirm_password;
+
+    // rules returns a message or ''
+    const rules = {
+        email(value) {
+            if (!value.trim()) return 'Email is required.';
+            if (!EMAIL_PATTERN.test(value.trim())) return 'Please enter a valid email address.';
+            return '';
+        },
+        display_name(value) {
+            return value.trim() ? '' : 'Display name is required.';
+        },
+        password(value) {
+            if (!value) return 'Password is required.';
+            const min = form.elements.password.minLength;
+            if (isRegister && min > 0 && value.length < min) {
+                return `Password must be at least ${min} characters.`;
+            }
+            return '';
+        },
+        confirm_password(value) {
+            if (!value) return 'Please confirm your password.';
+            if (value !== form.elements.password.value) return 'Passwords do not match.';
+            return '';
+        },
+    };
+
+    function showError(input, message) {
+        const errorEl = input.closest('.field').querySelector('.field-error');
+        errorEl.textContent = message;
+        input.classList.toggle('invalid', message !== '');
+        input.setAttribute('aria-invalid', message !== '');
+    }
+
+    function validateField(input) {
+        const rule = rules[input.name];
+        if (!rule) return '';
+        const message = rule(input.value);
+        showError(input, message);
+        return message;
+    }
+
+    const fields = Array.from(form.querySelectorAll('input')).filter((i) => rules[i.name]);
+
+    fields.forEach((input) => {
+        // check when the user leaves a field
+        input.addEventListener('blur', () => validateField(input));
+
+        // recheck sintantly as they fix it
+        input.addEventListener('input', () => {
+            if (input.classList.contains('invalid')) validateField(input);
+
+            // changing the password can fix or break the confirm field
+            if (input.name === 'password' && form.elements.confirm_password?.value) {
+                validateField(form.elements.confirm_password);
+            }
+        });
+    });
+
+    // block the submit if anything is invalid
+    form.addEventListener('submit', (event) => {
+        let firstInvalid = null;
+
+        fields.forEach((input) => {
+            if (validateField(input) && !firstInvalid) firstInvalid = input;
+        });
+
+        if (firstInvalid) {
+            event.preventDefault();
+            firstInvalid.focus();
+        }
+    });
+});
 // delete task function
 // For Deleting a Task
 const deleteModal = document.getElementById("deleteConfirmModal");

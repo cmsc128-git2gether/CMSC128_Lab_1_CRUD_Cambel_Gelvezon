@@ -1,6 +1,12 @@
 # app.py is the main Python file and runs Flask
-from flask import Flask, render_template, request, redirect, url_for
+import os
+import re
+from functools import wraps
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
+from werkzeug.security import generate_password_hash, check_password_hash
+from mysql.connector import IntegrityError
 
 from database import (
     get_db_connection,
@@ -8,39 +14,74 @@ from database import (
     get_task,
     update_task,
     delete_task,
-    restore_task,
-    toggle_task
+    toggle_task,
+    get_user_by_email,
+    get_user_by_id,
+    create_user
 )
 
-app = Flask(__name__)
+load_dotenv()
 
-# Date formatter
+app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY")
+app.permanent_session_lifetime = timedelta(days=7)
+
+# checks if user is logged in 
+def login_required(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if "user_id" not in session:
+            return redirect(url_for("login"))
+        return view(*args, **kwargs)
+    return wrapped
+
+# format dates
 @app.template_filter('format_date')
-def format_date(date_str):
-    if not date_str:
+def format_date(date_value):
+    if not date_value:
         return None
-    d = datetime.strptime(date_str, "%Y-%m-%d")
-    return d.strftime("%A, %b %d")
+
+    if isinstance(date_value, str):
+        date_value = datetime.strptime(date_value, "%Y-%m-%d").date()
+
+    return date_value.strftime("%A, %b %d")
 
 # Time formatter
 @app.template_filter('format_time')
-def format_time(time_str):
-    if not time_str:
+def format_time(time_value):
+    if not time_value:
         return None
-    
-    time_obj = datetime.strptime(time_str, "%H:%M")
+
+    if isinstance(time_value, str):
+        time_obj = datetime.strptime(time_value, "%H:%M").time()
+    elif isinstance(time_value, timedelta):
+        # MySQL TIME values are returned as timedelta
+        total_seconds = int(time_value.total_seconds())
+        hours = total_seconds // 3600
+        minutes = (total_seconds % 3600) // 60
+        time_obj = datetime.strptime(
+            f"{hours:02d}:{minutes:02d}",
+            "%H:%M"
+        ).time()
+    else:
+        time_obj = time_value
+
     return time_obj.strftime("%I:%M %p")
 
 # For the home interface
-@app.route('/')
+
+@app.route('/tasks')
+@login_required
 def index():
     tab = request.args.get('tab', 'all')
     view_mode = request.args.get('view', 'list')
     priority_filter = request.args.get('priority', '')
     tag_filter = request.args.get('tag', '')
     conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
 
-    all_tasks = conn.execute('SELECT * FROM tasks WHERE deleted = 0').fetchall()
+    cursor.execute("SELECT * FROM tasks")
+    all_tasks = cursor.fetchall()
     total_count = len(all_tasks)
     open_count = sum(1 for t in all_tasks if t['completed'] == 0)
     done_count = sum(1 for t in all_tasks if t['completed'] == 1)
@@ -73,7 +114,10 @@ def index():
             due_date ASC,
             due_time ASC
     '''
-    tasks = conn.execute(query, params).fetchall()
+    cursor.execute(query)
+    tasks = cursor.fetchall()
+
+    cursor.close()
     conn.close()
 
     today = datetime.now().date()
@@ -91,7 +135,11 @@ def index():
             no_due_date_tasks.append(t)
             continue
 
-        due = datetime.strptime(t['due_date'], "%Y-%m-%d").date()
+        due = t['due_date']
+
+        if isinstance(due, str):
+            due = datetime.strptime(due, "%Y-%m-%d").date()
+            
         if due <= today:
             # overdue tasks are folded into "Today" so nothing open silently disappears
             today_tasks.append(t)
@@ -133,6 +181,7 @@ def index():
 
 # For adding tasks
 @app.route('/add', methods=['POST'])
+@login_required
 def add():
     
     title = request.form['title']
@@ -154,6 +203,7 @@ def add():
    
 # For completing tasks
 @app.route('/complete/<int:task_id>', methods=['POST'])
+@login_required
 def toggle(task_id):
     toggle_task(task_id) 
     
@@ -161,18 +211,21 @@ def toggle(task_id):
 
 # For deleting tasks
 @app.route('/delete/<int:task_id>', methods=['DELETE'])
+@login_required
 def delete(task_id):
     delete_task(task_id)
     return '', 204
 
 # For deleting tasks
 @app.route('/restore/<int:task_id>', methods=['POST'])
+@login_required
 def restore(task_id):
     restore_task(task_id)
     return '', 204
 
 # For editing task and updating values of edited tasks
 @app.route('/edit/<int:task_id>', methods=['POST'])
+@login_required
 def update(task_id):
     title = request.form['title']
     due_date = request.form.get('due_date') or None
@@ -190,6 +243,96 @@ def update(task_id):
     )
     
     return redirect(url_for('index'))
+
+# --------- LAB 2 FUNCTIONS --------- #
+
+EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+MIN_PASSWORD_LENGTH = 8
+
+@app.route('/')
+def home():
+    if "user_id" in session:
+        return redirect(url_for("profile"))
+    return redirect(url_for("login"))
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    
+    # show form on GET method
+    if request.method == 'GET':
+        return render_template('register.html')
+    
+    # read form on POST method
+    # TODO: implement added requirements for password (e.g must include sysmbols, etc)
+    email = request.form.get('email', '').strip().lower()
+    display_name = request.form.get('display_name', '').strip()
+    password = request.form.get('password', '')
+    confirm_password = request.form.get('confirm_password', '')
+    
+    # form validation
+    error = None 
+    if not email or not display_name or not password or not confirm_password:
+        error = "All fields are required."
+    elif not EMAIL_PATTERN.match(email):
+        error = "Please enter a valid email address."
+    elif len(password) < MIN_PASSWORD_LENGTH:
+        error = f"Password must be at least {MIN_PASSWORD_LENGTH} characters."
+    elif password != confirm_password:
+        error = "Passwords do not match."
+    elif get_user_by_email(email):
+        error = "An account with that email already exists."
+        
+    if error:
+        flash(error, "error")
+        return render_template('register.html', email=email, display_name=display_name)
+    
+    # hash password and save user
+    password_hash = generate_password_hash(password)
+    try:
+        create_user(email, display_name, password_hash)
+    except IntegrityError:
+        # registering using same email causes errors
+        flash("An account with that email already exists.", "error")
+        return render_template('register.html', email=email, display_name=display_name)
+    
+    # redirect to login on successful register
+    flash("Account created. Please log in.", "success")
+    return redirect(url_for('login'))
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if "user_id" in session:
+        return redirect(url_for("profile"))
+
+    if request.method == 'GET':
+        return render_template('login.html')
+
+    email = request.form.get('email', '').strip().lower()
+    password = request.form.get('password', '')
+
+    user = get_user_by_email(email) if email else None
+    if user is None or not check_password_hash(user["password_hash"], password):
+        flash("Invalid credentials.", "error")
+        return render_template('login.html', email=email)
+
+    session.clear()
+    session.permanent = True
+    session["user_id"] = user["id"]
+    return redirect(url_for("profile"))
+
+@app.route('/profile')
+def profile():
+    user = get_user_by_id(session["user_id"])
+    if user is None:
+        session.clear()
+        return redirect(url_for("login"))
+    return render_template('profile.html', user=user)
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    session.clear()
+    flash("You have been logged out.", "success")
+    return redirect(url_for("login"))
 
 if __name__ == '__main__':
     app.run(debug=True)   

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <style>
+        @view-transition {
+            navigation: auto;
+        }
+    
+        </style>
+</head>
+
+<body class="auth-page">
+    <div class="auth-card login">
+        <div class="auth-header">
+            <i class="bi bi-braces-asterisk auth-header-icon"></i>
+            <p class="auth-header-name">Tutuman</p>
+        </div>
+
+        <div class="auth-tabs">
+            <a href="{{ url_for('login') }}" class="auth-tab active">Log In</a>
+            <a href="{{ url_for('register') }}" class="auth-tab">Create Account</a>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <p class="message {{ category }}">{{ message }}</p>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <form class="auth-form" method="POST" action="{{ url_for('login') }}">
+            <div class="field">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" value="{{ email or '' }}" placeholder="you@example.com"
+                    required>
+                <p class="field-error"></p>
+            </div>
+
+            <div class="field">
+                <label for="password">Password</label>
+                <div class="password-field">
+                    <input type="password" id="password" name="password" minlength="8" required>
+                    <button type="button" class="toggle-password" aria-label="Show password">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+                <p class="field-error"></p>
+            </div>
+
+            <button type="submit">Log in</button>
+        </form>
+
+        <p class="auth-footer">
+            No account?
+            <a href="{{ url_for('register') }}">Sign up</a>
+        </p>
+
+    </div>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
