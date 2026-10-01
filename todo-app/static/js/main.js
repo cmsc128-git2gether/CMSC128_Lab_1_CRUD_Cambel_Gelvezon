@@ -227,6 +227,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (value !== form.elements.new_password.value) return 'Passwords do not match.';
             return '';
         },
+        delete_password(value) {
+            return value ? '' : 'Enter your password to confirm.';
+        }
     };
 
     function showError(input, message) {

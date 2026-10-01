@@ -1337,6 +1337,10 @@
         .card-body {
             padding: var(--spacing-md) var(--spacing-lg);
             border-top: 1px solid var(--border);
+
+            .danger-desc {
+                margin-bottom: var(--spacing-md);
+            }
         }
     }
 
